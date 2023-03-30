@@ -50,8 +50,11 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
     
     # X_B, Y_B = np.meshgrid(np.arange(-brf_r, brf_r + pixel_m, pixel_m),
     #                        np.arange(-brf_r, brf_r + pixel_m, pixel_m))
-    X_B, Y_B = np.meshgrid(np.arange(-brf_r, round(brf_r-pixel_m,12), pixel_m),
-                           np.arange(-brf_r, round(brf_r-pixel_m,12), pixel_m))
+    # for brf_r = 0.002079050155, brf_r-pixel_m = 0.0020333567450000084>0.0020333567449992546 (Y_B[-1,0])
+
+    # for matlab: brf_r = 0.002079050155000 Y_B(end) = 0.002033356745001, brf_r-pixel_m = 0.002033356745000<0.002033356745001 (Y_B(end))
+    X_B, Y_B = np.meshgrid(np.arange(-brf_r, np.round(brf_r-pixel_m,12), pixel_m),
+                           np.arange(-brf_r, np.round(brf_r-pixel_m,12), pixel_m))
     # Get B
     if BRF_mode.lower() == 'avg':
         B = interp2d(X_BRF, Y_BRF, Z_BRF, kind='cubic')(X_B, Y_B)
@@ -59,7 +62,7 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
         B = BRFGaussian2D(X_B, Y_B, 1, [A,sigma_xy,mu_xy[0],mu_xy[1]])
     
     d_p = B.shape[0]  # diameter [pixel]
-    r_p = int(0.5 * d_p)  # radius [pixel]
+    r_p = int(np.round(0.5 * d_p))  # radius [pixel]
     
     # reset the BRF params
     BRF_params['lat_res_brf'] = pixel_m
@@ -176,11 +179,13 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
             Z_residual = 0
     
             # Dwell grid
-
-    
-        return B, X_B, Y_B, Z_removal, Z_residual, T_P, X_P, Y_P, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
-     
-    return B, X_B, Y_B, Z_removal, Z_residual, T_P, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
+    else:
+            X_P = X_dw;
+            Y_P = Y_dw;   
+            T_P_Real = T_P;
+            return B, X_B, Y_B, Z_removal, Z_residual, T_P, T_P_Real, X_P, Y_P, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
+         
+    return B, X_B, Y_B, Z_removal, Z_residual, T_P, _, _, _, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
 
     
         
