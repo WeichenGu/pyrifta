@@ -67,11 +67,13 @@ brf_params
 
 # load datx path
 include = ["Proc_IBF_HDX_data_Gordo-B_230308_AB_clamped_0_data_stitched_formrmv.datx"]
-base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230306_2D_2nd_iteration_result"
+# base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230306_2D_2nd_iteration_result"
+base_path = r"./"
+
 # save simulation result path
 folderjson = '../simu_data/'+datetime.datetime.now().strftime("%Y-%m-%d")+'/'+'Gordo-B_y-spacingx'+'{:.0f}'.format(1)
 # load json dwell time and convert to pvt
-json_path = r"C:/Users/frw78547/Anaconda3/IBF_python/simu_data/2023-03-30/Gordo-B_y-spacingx"+'{:.0f}'.format(1)+'/'
+json_path = r"../simu_data/2023-03-30/Gordo-B_y-spacingx"+'{:.0f}'.format(1)+'/'
 json_data_filename = "Gordo-B_202303021_test_Gaussian_extension_dwell_time.json"
 
 
@@ -105,33 +107,6 @@ X,Y,Z = Selected_Region(include,base_path,
 
 # X = mat_contents['X_selected_region']/1e3
 # Y = mat_contents['Y_selected_region']/1e3
-# Y = Y[::-1, :]
-
-# X = np.arange(0, m_per_pixel*Z_region_f.shape[1], m_per_pixel)
-# Y = np.arange(0, m_per_pixel*Z_region_f.shape[0], m_per_pixel)
-# X, Y = np.meshgrid(X, Y)
-# Z = Z_region_b;
-# Z = Z_region_b - np.min(Z_region_b)
-# arr = arr[::-1, :]
-# Xp = np.tile(np.arange(np.min(X), np.max(X)+m_per_pixel, m_per_pixel), (len(np.arange(np.min(Y), np.max(Y), m_per_pixel)), 1))
-# Yp = np.tile(np.arange(np.min(Y), np.max(Y), m_per_pixel), (len(np.arange(np.min(X), np.max(X)+m_per_pixel, m_per_pixel)), 1)).T
-# f = scipy.interpolate.RectBivariateSpline(Y[:,0].ravel(),X[0,:].ravel(),  Z)
-# Zf = f(Yp[:,0].ravel(),Xp[0,:].ravel()).reshape(Xp.shape) / 1E9
-# pixel_m = np.median(np.diff(Xp[0]))
-
-# # Xp += (-111.465-12.6791-2.5-15)/1e3  #coordinate transfer
-
-# X = Xp
-# Y = Yp
-# Z = Zf
-
-# ax = fig.add_subplot(121, projection='3d')
-
-# ax.plot_surface(Xp, Yp, Zf , cmap = 'coolwarm')
-# ax.view_init(80, -45)
-# ax.view_init(elev=90, azim=-90)  # flat view
-# plt.pcolormesh(X*1e3, mat_contents['Y_selected_region'], Z*1e9)
-# coors = [X[0,0]*1e3, X[0,-1]*1e3, mat_contents['Y_selected_region'][0,0], mat_contents['Y_selected_region'][-1,0]];
 m_per_pixel = 4.569341e-05
 pixel_m = np.median(np.diff(X[0,:]))
 coors = [X[0,0]*1e3, X[0,-1]*1e3, Y[-1,0]*1e3, Y[0,0]*1e3];
@@ -268,38 +243,11 @@ if selection[3]:
 # fig_Z_0 = plt.figure(dpi=1800)
 # plt.pcolormesh(X_ext*1e3, Y_ext*1e3, Z_0*1e9)
 
-""" #1
-fig_height_error = axs[0].pcolormesh(X_ext*1e3, Y_ext*1e3, Z_0*1e9)
-axs[0].set_title('Extension height error')
-fig.colorbar(fig_height_error,ax=axs[0])
-# 2
-fig_height_error = axs[1].pcolormesh(X_ext*1e3, Y_ext*1e3, T_0)
-axs[1].set_title('dwell time')
-axs[1].set_xlim(axs[0].get_xlim())
-axs[1].set_ylim(axs[0].get_ylim())
-fig.colorbar(fig_height_error,ax=axs[1])
-# 3
-axs[2].pcolormesh(X*1e3, Y*1e3, Z_residual_ca_0)
-axs[2].set_title('residual')
-axs[2].set_xlim(axs[0].get_xlim())
-axs[2].set_ylim(axs[0].get_ylim())
-fig.colorbar(fig_height_error,ax=axs[2])
-# 4
-axs[3].pcolormesh(X_ext*1e3, Y_ext*1e3, Z_removal_dw_0)
-axs[3].set_title('removal')
-axs[3].set_xlim(axs[0].get_xlim())
-axs[3].set_ylim(axs[0].get_ylim())
-fig.colorbar(fig_height_error,ax=axs[3])
-# spacing
-plt.tight_layout()
 
-# show all subplots
-plt.show() """
 #%%
 # fig, axs = plt.subplots(ncols=4, figsize=(15, 6))
 # Assuming X, Y, Z, X_ext, Y_ext, Z_0, T_0, Z_residual_ca_0, Z_removal_dw_0 are given numpy arrays
-# selection = np.array([1, 1, 1, 0])
-# selection_savejson = np.array([0, 0, 0, 0])
+
 
 
 map_height = 1 + np.count_nonzero(selection)
@@ -354,11 +302,11 @@ if selection[0]:
     c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
     c4.set_label('[nm]')
     ax4.set_title(f"Zero extension: removal \nPV =  {np.round((np.max(Z_removal_dw_0) - np.min(Z_removal_dw_0)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_0) * 1e9, 2)} nm")
-fig.tight_layout()
-ax1.invert_yaxis()
-ax2.invert_yaxis()
-ax3.invert_yaxis()
-ax4.invert_yaxis()
+    fig.tight_layout()
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
+    ax4.invert_yaxis()
 
 if selection_savejson[0]:
     simulated_result = {map_name[0]:Z_0* 1e9,map_name[1]:T_0,map_name[2]:Z_residual_ca_0* 1e9,map_name[3]:Z_removal_dw_0* 1e9}
@@ -414,11 +362,11 @@ if selection[1]:
     c4.set_label('[nm]')
     ax4.set_title(f"Gaussian extension: removal \nPV =  {np.round((np.max(Z_removal_dw_gauss) - np.min(Z_removal_dw_gauss)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_gauss) * 1e9, 2)} nm")
 
-fig.tight_layout()
-ax1.invert_yaxis()
-ax2.invert_yaxis()
-ax3.invert_yaxis()
-ax4.invert_yaxis()
+    fig.tight_layout()
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
+    ax4.invert_yaxis()
 
 if selection_savejson[1]:
     simulated_result = {map_name[0]:Z_gauss* 1e9,map_name[1]:T_gauss,map_name[2]:Z_residual_ca_gauss* 1e9,map_name[3]:Z_removal_dw_gauss* 1e9}
@@ -470,11 +418,11 @@ if selection[2]:
     c4.set_label('[nm]')
     ax4.set_title(f"8nn extension: removal \nPV =  {np.round((np.max(Z_removal_dw_8nn) - np.min(Z_removal_dw_8nn)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_8nn) * 1e9, 2)} nm")
 
-fig.tight_layout()
-ax1.invert_yaxis()
-ax2.invert_yaxis()
-ax3.invert_yaxis()
-ax4.invert_yaxis()
+    fig.tight_layout()
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
+    ax4.invert_yaxis()
 
 if selection_savejson[2]:
     simulated_result = {map_name[0]:Z_8nn* 1e9,map_name[1]:T_8nn,map_name[2]:Z_residual_ca_8nn* 1e9,map_name[3]:Z_removal_dw_8nn* 1e9}
@@ -524,11 +472,11 @@ if selection[3]:
     c4.set_label('[nm]')
     ax4.set_title(f"8nn_fall extension: removal \nPV =  {np.round((np.max(Z_removal_dw_8nn_fall) - np.min(Z_removal_dw_8nn_fall)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_8nn_fall) * 1e9, 2)} nm")
 
-fig.tight_layout()
-ax1.invert_yaxis()
-ax2.invert_yaxis()
-ax3.invert_yaxis()
-ax4.invert_yaxis()
+    fig.tight_layout()
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
+    ax4.invert_yaxis()
 
 if selection_savejson[3]:
     simulated_result = {map_name[0]:Z_8nn_fall* 1e9,map_name[1]:T_8nn_fall,map_name[2]:Z_residual_ca_8nn_fall* 1e9,map_name[3]:Z_removal_dw_8nn_fall* 1e9}
