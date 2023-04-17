@@ -26,7 +26,7 @@ def DwellTime2D_FFT_IterativeFFT(Z_to_remove, B, dw_range, ca_range, maxIters, P
     while True:
         # Calculation of new dwell time
         T, Z_removal, Z_residual, T_dw, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, Z_to_remove_ca, Z_removal_ca, Z_residual_ca, Z_residual_ca_woDetilt = dwell_time_2d_fft_iterative_fft_one_iter(Z_to_remove, B, -np.min(Z_residual_ca_woDetilt), dw_range, ca_range)
-        print(np.size(T_dw,1))
+        # print([np.size(T_dw,0),np.size(T_dw,1)])
         # Calculate stopping threshold
         PV_cur = smart_ptv(Z_residual_ca.ravel())
         dwellTime_cur = np.sum(T_dw)

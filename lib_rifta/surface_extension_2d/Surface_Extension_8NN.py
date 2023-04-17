@@ -19,14 +19,14 @@ def Surface_Extension_8NN(X, Y, Z, tif_mpp, Z_tif):
     n = Z.shape[1]
     m_ext = floor(tif_mpp * Z_tif.shape[0] * 0.5 / surf_mpp)
     n_ext = floor(tif_mpp * Z_tif.shape[1] * 0.5 / surf_mpp)
-    ca_range = {'y_s': m_ext + 1, 'y_e': m_ext + m, 'x_s': n_ext + 1, 'x_e': n_ext + n}
+    ca_range = {'y_s': m_ext , 'y_e': m_ext + m, 'x_s': n_ext , 'x_e': n_ext + n}
     
     # Initial extension matrices
     X_ext, Y_ext = np.meshgrid(np.arange(-n_ext, n+n_ext), np.arange(-m_ext, m+m_ext))
     X_ext = X_ext * surf_mpp + X[0, 0]
     Y_ext = Y_ext * surf_mpp + Y[-1, -1]
     Z_ext = np.full(X_ext.shape, np.nan)
-    Z_ext[ca_range['y_s']-1:ca_range['y_e'], ca_range['x_s']-1:ca_range['x_e']] = Z
+    Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']] = Z
     BW_ini = ~isnan(Z_ext)
     BW_prev = BW_ini
     h = Z_ext.shape[0]
@@ -35,13 +35,31 @@ def Surface_Extension_8NN(X, Y, Z, tif_mpp, Z_tif):
     # Filling the invalid points
     r = 1
     while r <= max(m_ext, n_ext):
+        
+        
+        '''
         u, v = np.meshgrid(np.arange(-r, r+1), np.arange(-r, r+1))
         rr = np.sqrt(u**2 + v**2)
         se = rr <= r
         BW_curr = binary_dilation(BW_ini, structure=se)
         BW_fill = BW_curr ^ BW_prev
         idy, idx = np.nonzero(BW_fill == 1)
+        '''
         # idx , idy = np.nonzero(BW_fill == 1) 
+        u, v = np.meshgrid(np.arange(-r, r+1), np.arange(-r, r+1))
+        coors = np.vstack((u.flatten(), v.flatten())).T
+        rr = np.linalg.norm(coors,axis=1).reshape(u.shape)
+        se = rr <= r
+        BW_curr = binary_dilation(BW_ini, structure=se)
+        BW_fill = BW_curr ^ BW_prev
+        # idy, idx = np.nonzero(BW_fill == 1)
+        # due to the matlab index search meathod is different, you need to transpose the matrix
+        # and get the inverse index, use it in normal matrix
+        idyt, idxt = np.nonzero(BW_fill.T == 1)
+        idy, idx = (idxt, idyt)*1
+        
+        
+        
         while idy.size != 0:
             for k in range(idy.size):
                 count = 0
@@ -51,7 +69,7 @@ def Surface_Extension_8NN(X, Y, Z, tif_mpp, Z_tif):
                         if i != 0 or j != 0:
                             idi = idy[k] + i
                             idj = idx[k] + j
-                            if (0 < idi <= h-1 and 0 < idj <= w-1 and not isnan(Z_ext[idi, idj])):  #Z_ext[idi-1, idj-1]
+                            if (0 <= idi <= h-1 and 0 <= idj <= w-1 and not isnan(Z_ext[idi, idj])):  #Z_ext[idi-1, idj-1]
                                 count += 1
                                 # nn_sum += Z_ext[idi-1, idj-1]
                                 nn_sum += Z_ext[idi, idj]
@@ -59,7 +77,11 @@ def Surface_Extension_8NN(X, Y, Z, tif_mpp, Z_tif):
                     Z_ext[idy[k], idx[k]] = nn_sum / count
                     BW_fill[idy[k], idx[k]] = 0
             # print(k)
-            idy, idx = np.where(BW_fill == True)
+            # idy, idx = np.where(BW_fill == True)
+            # due to the matlab index search meathod is different, you need to transpose the matrix
+            # and get the inverse index, use it in normal matrix
+            idyt, idxt = np.nonzero(BW_fill.T == 1)
+            idy, idx = (idxt, idyt)*1
             # idx, idy = np.where(BW_fill == 1)
         BW_prev = BW_curr
         r += 1

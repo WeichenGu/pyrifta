@@ -12,7 +12,10 @@ def remove_surface1(X, Y, Z):
 
     z = Z[idx]
     x = X[idx]
+    # x = np.transpose(X)[idx.T]
+    
     y = Y[idx]
+    # y = np.transpose(Y)[idx.T]
 
     H = np.vstack((np.ones_like(x), x, y)).T
 

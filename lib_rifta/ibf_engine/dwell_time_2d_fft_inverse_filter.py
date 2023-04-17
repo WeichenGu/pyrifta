@@ -20,7 +20,7 @@ def dwell_time_2d_fft_inverse_filter(R, B, gamma, use_DCT):
     """
 
     mR, nR = R.shape
-
+    
     if use_DCT:
         R_top = np.hstack((R, np.fliplr(R)))
         R_T = np.vstack((R_top, np.flipud(R_top)))
@@ -32,8 +32,9 @@ def dwell_time_2d_fft_inverse_filter(R, B, gamma, use_DCT):
     else:
         FR = np.fft.fft2(R)
         FB = np.fft.fft2(B, s=(mR, nR))
-
+        #Thresholding
     sFB = np.where(np.abs(FB) > 0, FB, 1 / gamma)
+    iFB = 1 / sFB
     iFB = np.where(np.abs(sFB) * gamma > 1, 1 / sFB, gamma)
 
     T = np.real(np.fft.ifft2(iFB * FR))
