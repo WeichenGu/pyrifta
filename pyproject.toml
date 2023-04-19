@@ -1,0 +1,21 @@
+[project]
+name = "pyrifta"
+description = """\
+    Python implementation of RIFTA dwell time calculation code originally \
+    developed at NSLS II.\
+    """
+version = "0.1"
+authors = [
+    { name = "Weichen Gu", email = "weichen.gu@diamond.ac.uk" },
+    { name = "Matthew Hand", email = "matthew.hand@diamond.ac.uk" }
+]
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pymoo",
+    "scipy",
+    "metrology @ git+ssh://git@gitlab.diamond.ac.uk/optics/dls-optics-metrology.git",
+    "pymurilo @ git+ssh://git@gitlab.diamond.ac.uk/jtw45929/pymurilo.git",
+    "ibfanalysis @ git+ssh://git@gitlab.diamond.ac.uk/optics-ibf/dls-optics-ibf-analysis.git"
+]
