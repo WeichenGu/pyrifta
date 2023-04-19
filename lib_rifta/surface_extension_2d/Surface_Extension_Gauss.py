@@ -28,7 +28,7 @@ def Surface_Extension_Gauss(X, Y, Z, brf_params, Z_tif):
     X_ext, Y_ext = np.meshgrid(np.arange(-n_ext, n-1+n_ext+1), np.arange(-m_ext, m-1+m_ext+1))
     X_ext = X_ext * surf_mpp + X[0,0]
     Y_ext = Y_ext * surf_mpp + Y[-1,-1]
-    Z_ext = np.empty_like(X_ext, dtype=np.float)
+    Z_ext = np.empty_like(X_ext, dtype=float)
     Z_ext[:] = np.nan
     Z_ext[ca_range['v_s']-1:ca_range['v_e'], ca_range['u_s']-1:ca_range['u_e']] = Z
 
