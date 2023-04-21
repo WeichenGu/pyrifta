@@ -33,7 +33,7 @@ class Problem_func_dwell_grid(ElementwiseProblem):
         dw_range = self.dw_range
         ca_range = self.ca_range
         use_DCT = self.use_DCT
-        print(gamma0)
+        # print(gamma0)
         # The ca in dw range
         ca_in_dw_y_s = ca_range['y_s'] - dw_range['y_s']
         ca_in_dw_x_s = ca_range['x_s'] - dw_range['x_s']
