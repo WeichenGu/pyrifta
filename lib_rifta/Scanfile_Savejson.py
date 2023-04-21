@@ -25,13 +25,14 @@ def Scanfile_Savejson(filename, Z, Y, dwell_time,
         "dwell_time_unit": dwell_time_unit,
         "filter": height_error_filter,
         "BRF": brf_params,
-        "HD_X_BRF_centre_point": [fitresult.cen_x, fitresult.cen_y],
         "x_etching_region_startpoint": x_start,
         "y_etching_region_startpoint": y_start,
         "etching_region_length": selected_region_length,
         "etching_region_width": selected_region_width
         
     }
+    if fitresult is not None:
+        scan["HD_X_BRF_centre_point"]=[fitresult.cen_x, fitresult.cen_y]
 
     if np.max(np.unique(Z)) < 1:
         scan["Z"] = np.round((Z[0, :] * 1e3), 4).tolist()

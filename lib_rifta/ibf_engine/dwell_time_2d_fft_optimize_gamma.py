@@ -8,17 +8,18 @@ Created on Fri Mar 24 00:16:04 2023
 import numpy as np
 from scipy.optimize import minimize_scalar
 from scipy.optimize import minimize
-from scipy.optimize import basinhopping
-from functools import partial
-from scipy.signal import fftconvolve
+# from scipy.optimize import basinhopping
+# from functools import partial
+# from scipy.signal import fftconvolve
 from lib_rifta.ibf_engine.dwell_time_2d_fft_inverse_filter import dwell_time_2d_fft_inverse_filter
 from lib_rifta.ibf_engine.conv_fft2 import conv_fft2
 
-from lib_rifta.ibf_engine.pymoo_patternsearch import pymoo_minimize 
+from lib_rifta.ibf_engine.pymoo_patternsearch import pymoo_minimize_entire
+from lib_rifta.ibf_engine.pymoo_patternsearch import pymoo_minimize_dwell_grid
 
 def dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, flag, use_DCT):
     if flag == 'entire':
-        result = minimize_scalar(objective_func_entire, args=(Z_to_remove, B, dw_range, ca_range, use_DCT), method='bounded', bounds=(0, 2*gamma0))
+        # result = minimize_scalar(objective_func_entire, args=(Z_to_remove, B, dw_range, ca_range, use_DCT), method='bounded', bounds=(0, 2*gamma0))
         # result = minimize(objective_func_entire, gamma0, args=(Z_to_remove, B, dw_range, ca_range, use_DCT), method='L-BFGS-B',bounds=[(0, 2*gamma0)], options={'disp':False, 'maxiter': 500})
         # objfun = partial(objective_func_entire,
         #                  Z_to_remove = Z_to_remove, 
@@ -27,6 +28,7 @@ def dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_
         #                  ca_range = ca_range,
         #                  use_DCT = use_DCT)
         # result = basinhopping(objfun, gamma0, disp = False)
+        result = pymoo_minimize_entire(gamma0, Z_to_remove, B, dw_range, ca_range, use_DCT, iter_show = False)
         gamma =result.x[0]
     elif flag == 'dwell':
         '''
@@ -41,7 +43,7 @@ def dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_
         #                  use_DCT = use_DCT)
         # result = basinhopping(objfun, gamma0, disp = False)
         gamma = result.x[0]'''
-        result = pymoo_minimize(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, use_DCT)
+        result = pymoo_minimize_dwell_grid(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, use_DCT, iter_show = True)
         gamma = result.X
     else:
         gamma = gamma0

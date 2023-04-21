@@ -28,7 +28,7 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
         'dwellTime_dif': 60,  # [s]
         'isDownSampling': False
     }
-    
+
     # 1. Deal with input arguments
     if options is None:
         options = defaultOptions
@@ -53,8 +53,8 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
     # for brf_r = 0.002079050155, brf_r-pixel_m = 0.0020333567450000084>0.0020333567449992546 (Y_B[-1,0])
 
     # for matlab: brf_r = 0.002079050155000 Y_B(end) = 0.002033356745001, brf_r-pixel_m = 0.002033356745000<0.002033356745001 (Y_B(end))
-    X_B, Y_B = np.meshgrid(np.arange(-brf_r, np.round(brf_r-pixel_m,12), pixel_m),
-                           np.arange(-brf_r, np.round(brf_r-pixel_m,12), pixel_m))
+    X_B, Y_B = np.meshgrid(np.arange(-brf_r, np.round(brf_r,12), pixel_m),
+                           np.arange(-brf_r, np.round(brf_r,12), pixel_m))
     # Get B
     if BRF_mode.lower() == 'avg':
         B = interp2d(X_BRF, Y_BRF, Z_BRF, kind='cubic')(X_B, Y_B)
@@ -62,7 +62,7 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
         B = BRFGaussian2D(X_B, Y_B, 1, [A,sigma_xy,mu_xy[0],mu_xy[1]])
     
     d_p = B.shape[0]  # diameter [pixel]
-    r_p = int(np.round(0.5 * d_p))  # radius [pixel]
+    r_p = int(np.floor(0.5 * d_p))  # radius [pixel]
     
     # reset the BRF params
     BRF_params['lat_res_brf'] = pixel_m
@@ -171,9 +171,9 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
             Z_residual = Z_residual.reshape(Z_to_remove.shape)
     
             # Dwell grid results
-            Z_to_remove_dw = Z_to_remove[dw_range['v_s']:dw_range['v_e'], dw_range['u_s']:dw_range['u_e']]
-            Z_removal_dw = Z_removal[dw_range['v_s']:dw_range['v_e'], dw_range['u_s']:dw_range['u_e']]
-            Z_residual_dw = Z_residual[dw_range['v_s']:dw_range['v_e'], dw_range['u_s']:dw_range['u_e']]
+            Z_to_remove_dw = Z_to_remove[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']]
+            Z_removal_dw = Z_removal[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']]
+            Z_residual_dw = Z_residual[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']]
         else:
             Z_removal = 0
             Z_residual = 0
