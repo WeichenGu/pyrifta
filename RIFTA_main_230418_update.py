@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+
 """
-20230330
+20230418
 RIFTA with 4 extension
 
 set brf
@@ -13,13 +14,15 @@ draw
 """
 import sys
 sys.path.append('../lib/')
-import os
+# import os
 
 import scipy
 import datetime
 import numpy as np
+import metrology as mt
 import matplotlib.pyplot as plt
 from scipy.ndimage import binary_dilation
+import pymurilo.File_Functions as pymf
 # from scipy.io import loadmat
 
 # from scipy import interpolate
@@ -34,7 +37,7 @@ from lib_rifta import Scanfile_Savejson
 from lib_rifta import Generate_pvt_from_json
 from lib_rifta.ibf_engine.remove_surface1 import remove_surface1
 from lib_rifta.ibf_engine.conv_fft2 import conv_fft2
-
+from lib_rifta.draw import draw_init, draw_simulation 
 
 # from mpl_toolkits.mplot3d import Axes3D
 
@@ -55,7 +58,7 @@ Y_brf = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
 xx, yy = np.meshgrid(X_brf, Y_brf)
 
 Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0],[0]])
-brf_params
+# brf_params
 # fig = plt.figure(dpi=1800)
 # ax = fig.add_subplot(111, projection='3d')
 
@@ -67,39 +70,57 @@ brf_params
 # plt.show()
 
 # load datx path
-include = ["Proc_IBF_HDX_data_Gordo-B_230308_AB_clamped_0_data_stitched_formrmv.datx"]
-# base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230306_2D_2nd_iteration_result"
-base_path = r"./"
+include = ["Proc_IBF_HDX_data_Gordo-B_230406_AB_clamped_5_data_stitched_mask_rmv.datx"]
+base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
+# base_path = r"./"
 
 # save simulation result path
+testname = 'Gordo-B_2023406_test'  #json file name saved 
 folderjson = '../simu_data/'+datetime.datetime.now().strftime("%Y-%m-%d")+'/'+'Gordo-B_y-spacingx'+'{:.0f}'.format(1)
 # load json dwell time and convert to pvt
-# json_path = r"../simu_data/2023-03-31/Gordo-B_y-spacingx"+'{:.0f}'.format(1)+'/'
-json_path = folderjson
-json_data_filename = "Gordo-B_202303021_test_Gaussian_extension_dwell_time.json"
-pvt_gen = 0
+# json_path = r"../simu_data/2023-04-18/Gordo-B_y-spacingx"+'{:.0f}'.format(1)+'/'
+
+json_path = folderjson + '/'
+# pvt load file
+# pvt_gen = True
+pvt_gen = False
+json_data_filename = testname+"_8nn_extension_dwell_time.json"
+
 
 #%% load datx - measurement file
 
+'''
+# BRFfitting = Reference_Point(include,base_path, x_min=103,x_max=108,y_min=6,y_max=11)
 
-BRFfitting = Reference_Point(include,base_path, x_min=103,x_max=108,y_min=6,y_max=11)
-selected_region_length,selected_region_width = 12,5
 BRFfitting.cen_x = 105.3221
 BRFfitting.cen_y = 8.5752
-
+'''
+BRFfitting = None
+selected_region_length,selected_region_width = 12,5
 X,Y,Z = Selected_Region(include,base_path,
-                        fitresult = BRFfitting,
+                        fitresult = None,
                         x_offset_distance = 40, 
-                        y_offset_distance = 0, 
+                        y_offset_distance = -10, 
                         x_ibf = -111.465,
                         y_ibf = 33.336,
                         selected_region_length = selected_region_length,
-                        selected_region_width = selected_region_width
+                        selected_region_width = selected_region_width,
+                        mask = True, # no BRF x_shift,y_shift are from matlab calculation, or python
+                        x_shift=-221.3591,
+                        y_shift=24.6847
                         )
+# Z = Z-np.nanmin(Z)
 
 # m output-X,Y
 # m output-Z
+# selected_region_length,selected_region_width = 12,5
+# hdx_path = pymf.List_Files(base_path, file_type=".datx", include=include, level=3)
 
+# df = mt.read_mx(hdx_path[0], replace_na=True, convert_z=True, apply_coord=True, apply_lat_cal=True)
+
+# X = df.columns.to_numpy() * 1e3 -24.6847
+# Y = df.index.to_numpy() * 1e3 -221.3591
+# Z = df.to_numpy() * 1e9
 #%%
 
 # data_dir = r'C:\Users\frw78547\OneDrive - Diamond Light Source Ltd\Documents\IBF DATA\20230314_2D_3rd_iter\\'
@@ -113,7 +134,7 @@ X,Y,Z = Selected_Region(include,base_path,
 # Y = mat_contents['Y_selected_region']/1e3
 m_per_pixel = 4.569341e-05
 pixel_m = np.median(np.diff(X[0,:]))
-coors = [X[0,0]*1e3, X[0,-1]*1e3, Y[-1,0]*1e3, Y[0,0]*1e3];
+coors = [X[0,0]*1e3, X[0,-1]*1e3, Y[-1,0]*1e3, Y[0,0]*1e3]
 
 fig = plt.figure(dpi=1800)
 plt.imshow(Z, extent=coors)
@@ -184,14 +205,14 @@ if selection[0]:
     Z_residual_ca_0 = Z_residual_dw[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
     Z_residual_ca_0 = remove_surface1(X_ca, Y_ca, Z_residual_ca_0)
 #%
-#%%
+#%
 # 2. Gaussian 
 if selection[1]:
     _, _, Z_gauss, _ = Surface_Extension(X, Y, Z, brf_params, Z_avg, 'gauss', False)
 
     _, _, _, _, _, T_gauss, _, _, _, _, _, _, _, _, _, _, _, _, _, _ = \
         DwellTime2D_FFT_Full_Test(
-            X_ext, Y_ext, Z_gauss, 0,brf_params.copy(), brf_mode, X_brf, Y_brf, Z_avg, ca_range,
+            X_ext, Y_ext, Z_gauss, 0, brf_params.copy(), brf_mode, X_brf, Y_brf, Z_avg, ca_range,
             pixel_m, tmin, tmax, options, ratio, False
         )
 
@@ -233,7 +254,7 @@ if selection[3]:
 
     _, _, _, _, _, T_8nn_fall, _, _, _, _, _, _, _, _, _, _, _, _, _, _ = \
         DwellTime2D_FFT_Full_Test(
-            X_ext, Y_ext, Z_8nn_fall, 0,brf_params.copy(), brf_mode, X_brf, Y_brf, Z_avg, ca_range,
+            X_ext, Y_ext, Z_8nn_fall, 0, brf_params.copy(), brf_mode, X_brf, Y_brf, Z_avg, ca_range,
             pixel_m, tmin, tmax, options, ratio, False
         )
 
@@ -256,88 +277,29 @@ if selection[3]:
 # fig, axs = plt.subplots(ncols=4, figsize=(15, 6))
 # Assuming X, Y, Z, X_ext, Y_ext, Z_0, T_0, Z_residual_ca_0, Z_removal_dw_0 are given numpy arrays
 
-
-
 map_height = 1 + np.count_nonzero(selection)
 map_name = ['height_error', 'dwell_time', 'residual', 'removal']
-grid = plt.GridSpec(map_height, 4)
-fig = plt.figure("One-step surface extension dwell time results",figsize=(16,10),dpi=800)
-#Original surface
-ax0 = fig.add_subplot(grid[0,0:2])
-mesh0 = ax0.pcolormesh(X * 1e3, Y * 1e3, Z * 1e9, cmap='viridis')
-ax0.set_aspect('equal')
-ax0.invert_yaxis()
-c0 = plt.colorbar(mesh0, ax=ax0, pad=0.05)
-c0.set_label('[nm]')
-rms_Z = np.std(Z) * 1e9
-ax0.set_title(f"Original Surface: PV = {np.round((np.max(Z) - np.min(Z)) * 1e9, 2)} nm, RMS = {np.round(rms_Z, 2)} nm")
-# BRF
-ax0 = fig.add_subplot(grid[0,2:3])
-mesh0 = ax0.pcolormesh(xx * 1e3, yy * 1e3, Z_avg * 1e9, cmap='viridis')
-ax0.set_aspect('equal')
-c0 = plt.colorbar(mesh0, ax=ax0, pad=0.05)
-c0.set_label('[nm]')
-ax0.set_title(f"BRF: Peakrate = {np.round(brf_params['A']*1e9, 3)} nm/s, Sigma = {np.round(brf_params['sigma_xy'][0] * 1e3, 4)} nm")
+ext_name = ['Zero extension','Gaussian extension','8nn extension','8nn fall extension']
+
+fig, grid, ax0, mesh0 = draw_init(X, Y, Z, selection, xx, yy, Z_avg, brf_params, ext_name, map_name)
+
 
 
 fig.tight_layout()
 fig.subplots_adjust(top=0.99, bottom=0.1, left=0.1, right=0.8, hspace=0.5, wspace=0.4)
 
 if selection[0]:
-    ax1 = fig.add_subplot(grid[1,0])
-    mesh1 = ax1.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_0 * 1e9, cmap='viridis')
-    ax1.set_aspect('equal')
-    c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
-    c1.set_label('[nm]')
-    ax1.set_title(f"Zero extension: \nPV = {np.round((np.max(Z_0) - np.min(Z_0)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_0) * 1e9, 2)} nm")
-    # fig.gca().invert_yaxis()
-
-    # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
-
-    # Other subplots and operations...
-    # ...
-    ax2 = fig.add_subplot(grid[1,1])
-    mesh2 = ax2.pcolormesh(X_ext * 1e3, Y_ext * 1e3, T_0, cmap='viridis')
-    ax2.set_aspect('equal')
-    c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
-    c2.set_label('[s]')
-    ax2.set_title(f"Zero extension: \ndwell time =  {np.round((np.sum(T_0)), 2)} s")
-
-
-    ax3 = fig.add_subplot(grid[1,2])
-    mesh3 = ax3.pcolormesh(X * 1e3, Y * 1e3, Z_residual_ca_0 * 1e9, cmap='viridis')
-    ax3.set_aspect('equal')
-    c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
-    c3.set_label('[nm]')
-    ax3.set_title(f"Zero extension: residual \nPV =  {np.round((np.max(Z_residual_ca_0) - np.min(Z_residual_ca_0)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_0) * 1e9, 2)} nm")
-    ax3.set_xlim(ax2.get_xlim())
-    ax3.set_ylim(ax2.get_ylim())
-    
-    ax4 = fig.add_subplot(grid[1,3])
-    mesh4 = ax4.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_removal_dw_0 * 1e9, cmap='viridis')
-    ax4.set_aspect('equal')
-    c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
-    c4.set_label('[nm]')
-    ax4.set_title(f"Zero extension: removal \nPV =  {np.round((np.max(Z_removal_dw_0) - np.min(Z_removal_dw_0)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_0) * 1e9, 2)} nm")
-
-    # ax1.set_aspect('equal')
-    # ax2.set_aspect('equal')
-    # ax3.axis('equal')
-    # ax4.axis('equal')
-    ax1.invert_yaxis()
-    ax2.invert_yaxis()
-    ax3.invert_yaxis()
-    ax4.invert_yaxis()
-    fig.tight_layout()
+    draw_simulation(fig, X, Y, X_ext, Y_ext, Z_0, T_0,
+                    Z_residual_ca_0, Z_removal_dw_0, grid, ext_name, map_name, map_row = 1)
 
 if selection_savejson[0]:
     simulated_result = {map_name[0]:Z_0* 1e9,map_name[1]:T_0,map_name[2]:Z_residual_ca_0* 1e9,map_name[3]:Z_removal_dw_0* 1e9}
 
     for i_name in range(0, len(map_name)):
         # create a new folder simu_data
-        Scanfile_Savejson(folderjson+'/Gordo-B_202303021_test_Zero_extension_'+map_name[i_name],
+        Scanfile_Savejson(folderjson+'/'+testname+'_test_Zero_extension_'+map_name[i_name],
                           X_ext, Y_ext, simulated_result[map_name[i_name]],
-                          testname='Gordo-B_20230306_test', data_from='HD-X', calculation='RIFTA',
+                          testname=testname, data_from='HD-X', calculation='RIFTA',
                           grid = m_per_pixel*1E3 ,dwell_time_unit = 's',
                           height_error_filter = 0, brf_params=brf_params,
                           x_start = np.min(X)*1e3,y_start = np.min(Y)*1e3,
@@ -350,53 +312,16 @@ if selection_savejson[0]:
         # m_per_pixel*1E3,'mm','s',0,brf_params,fitresult)
 
 if selection[1]:
-    ax1 = fig.add_subplot(grid[2,0])
-    mesh1 = ax1.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_gauss * 1e9, cmap='viridis')
-    ax1.set_aspect('equal')
-    c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
-    c1.set_label('[nm]')
-    ax1.set_title(f"Gaussian extension: \nPV = {np.round((np.max(Z_gauss) - np.min(Z_gauss)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_gauss) * 1e9, 2)} nm")
-    # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
-
-    # Other subplots and operations...
-    # ...
-    ax2 = fig.add_subplot(grid[2,1])
-    mesh2 = ax2.pcolormesh(X_ext * 1e3, Y_ext * 1e3, T_gauss, cmap='viridis')
-    ax2.set_aspect('equal')
-    c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
-    c2.set_label('[s]')
-    ax2.set_title(f"Gaussian extension: \ndwell time =  {np.round((np.sum(T_gauss)), 2)} s")
-
-
-    ax3 = fig.add_subplot(grid[2,2])
-    mesh3 = ax3.pcolormesh(X * 1e3, Y * 1e3, Z_residual_ca_gauss * 1e9, cmap='viridis')
-    ax3.set_aspect('equal')
-    c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
-    c3.set_label('[nm]')
-    ax3.set_title(f"Gaussian extension: residual \nPV =  {np.round((np.max(Z_residual_ca_gauss) - np.min(Z_residual_ca_gauss)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_gauss) * 1e9, 2)} nm")
-    ax3.set_xlim(ax2.get_xlim())
-    ax3.set_ylim(ax2.get_ylim())
-    
-    ax4 = fig.add_subplot(grid[2,3])
-    mesh4 = ax4.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_removal_dw_gauss * 1e9, cmap='viridis')
-    ax4.set_aspect('equal')
-    c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
-    c4.set_label('[nm]')
-    ax4.set_title(f"Gaussian extension: removal \nPV =  {np.round((np.max(Z_removal_dw_gauss) - np.min(Z_removal_dw_gauss)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_gauss) * 1e9, 2)} nm")
-
-    fig.tight_layout()
-    ax1.invert_yaxis()
-    ax2.invert_yaxis()
-    ax3.invert_yaxis()
-    ax4.invert_yaxis()
+    draw_simulation(fig, X, Y, X_ext, Y_ext, Z_gauss, T_gauss,
+                    Z_residual_ca_gauss, Z_removal_dw_gauss, grid, ext_name, map_name, map_row = 2)
 
 if selection_savejson[1]:
     simulated_result = {map_name[0]:Z_gauss* 1e9,map_name[1]:T_gauss,map_name[2]:Z_residual_ca_gauss* 1e9,map_name[3]:Z_removal_dw_gauss* 1e9}
 
     for i_name in range(0, len(map_name)):
-        Scanfile_Savejson(folderjson+'/Gordo-B_202303021_test_Gaussian_extension_'+map_name[i_name],
+        Scanfile_Savejson(folderjson+'/'+testname+'_Gaussian_extension_'+map_name[i_name],
                           X_ext, Y_ext, simulated_result[map_name[i_name]],
-                          testname='Gordo-B_20230306_test', data_from='HD-X', calculation='RIFTA',
+                          testname=testname, data_from='HD-X', calculation='RIFTA',
                           grid = m_per_pixel*1E3 ,dwell_time_unit = 's',
                           height_error_filter = 0, brf_params=brf_params,
                           x_start = np.min(X)*1e3,y_start = np.min(Y)*1e3,
@@ -406,52 +331,15 @@ if selection_savejson[1]:
     
     
 if selection[2]:
-    ax1 = fig.add_subplot(grid[3,0])
-    mesh1 = ax1.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_8nn * 1e9, cmap='viridis')
-    ax1.set_aspect('equal')
-    c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
-    c1.set_label('[nm]')
-    ax1.set_title(f"8nn extension: \nPV = {np.round((np.max(Z_8nn) - np.min(Z_8nn)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_8nn) * 1e9, 2)} nm")
-    # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
-
-    # Other subplots and operations...
-    # ...
-    ax2 = fig.add_subplot(grid[3,1])
-    mesh2 = ax2.pcolormesh(X_ext * 1e3, Y_ext * 1e3, T_8nn, cmap='viridis')
-    ax2.set_aspect('equal')
-    c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
-    c2.set_label('[s]')
-    ax2.set_title(f"8nn extension: \ndwell time =  {np.round((np.sum(T_8nn)), 2)} s")
-
-
-    ax3 = fig.add_subplot(grid[3,2])
-    mesh3 = ax3.pcolormesh(X * 1e3, Y * 1e3, Z_residual_ca_8nn * 1e9, cmap='viridis')
-    ax3.set_aspect('equal')
-    c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
-    c3.set_label('[nm]')
-    ax3.set_title(f"8nn extension: residual \nPV =  {np.round((np.max(Z_residual_ca_8nn) - np.min(Z_residual_ca_8nn)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_8nn) * 1e9, 2)} nm")
-    ax3.set_xlim(ax2.get_xlim())
-    ax3.set_ylim(ax2.get_ylim())
-    
-    ax4 = fig.add_subplot(grid[3,3])
-    mesh4 = ax4.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_removal_dw_8nn * 1e9, cmap='viridis')
-    ax4.set_aspect('equal')
-    c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
-    c4.set_label('[nm]')
-    ax4.set_title(f"8nn extension: removal \nPV =  {np.round((np.max(Z_removal_dw_8nn) - np.min(Z_removal_dw_8nn)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_8nn) * 1e9, 2)} nm")
-
-    fig.tight_layout()
-    ax1.invert_yaxis()
-    ax2.invert_yaxis()
-    ax3.invert_yaxis()
-    ax4.invert_yaxis()
+    draw_simulation(fig, X, Y, X_ext, Y_ext, Z_8nn, T_8nn,
+                    Z_residual_ca_8nn, Z_removal_dw_8nn, grid, ext_name, map_name, map_row = 3)
 
 if selection_savejson[2]:
     simulated_result = {map_name[0]:Z_8nn* 1e9,map_name[1]:T_8nn,map_name[2]:Z_residual_ca_8nn* 1e9,map_name[3]:Z_removal_dw_8nn* 1e9}
     for i_name in range(0, len(map_name)):
-        Scanfile_Savejson(folderjson+'/Gordo-B_202303021_test_8nn_extension_'+map_name[i_name],
+        Scanfile_Savejson(folderjson+'/'+testname+'_8nn_extension_'+map_name[i_name],
                           X_ext, Y_ext, simulated_result[map_name[i_name]],
-                          testname='Gordo-B_20230306_test', data_from='HD-X', calculation='RIFTA',
+                          testname=testname, data_from='HD-X', calculation='RIFTA',
                           grid = m_per_pixel*1E3 ,dwell_time_unit = 's',
                           height_error_filter = 0, brf_params=brf_params,
                           x_start = np.min(X)*1e3,y_start = np.min(Y)*1e3,
@@ -460,52 +348,16 @@ if selection_savejson[2]:
                           fitresult=BRFfitting)
 
 if selection[3]:
-    ax1 = fig.add_subplot(grid[4,0])
-    mesh1 = ax1.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_8nn_fall * 1e9, cmap='viridis')
-    ax1.set_aspect('equal')
-    c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
-    c1.set_label('[nm]')
-    ax1.set_title(f"8nn fall extension: \nPV = {np.round((np.max(Z_8nn_fall) - np.min(Z_8nn_fall)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_8nn_fall) * 1e9, 2)} nm")
-    # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
+    draw_simulation(fig, X, Y, X_ext, Y_ext, Z_8nn_fall, T_8nn_fall,
+                    Z_residual_ca_8nn_fall, Z_removal_dw_8nn_fall, grid, ext_name, map_name, map_row = 4)
 
-    # Other subplots and operations...
-    # ...
-    ax2 = fig.add_subplot(grid[4,1])
-    mesh2 = ax2.pcolormesh(X_ext * 1e3, Y_ext * 1e3, T_8nn_fall, cmap='viridis')
-    ax2.set_aspect('equal')
-    c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
-    c2.set_label('[s]')
-    ax2.set_title(f"8nn fall extension: \ndwell time =  {np.round((np.sum(T_8nn_fall)), 2)} s")
-
-
-    ax3 = fig.add_subplot(grid[4,2])
-    mesh3 = ax3.pcolormesh(X * 1e3, Y * 1e3, Z_residual_ca_8nn_fall * 1e9, cmap='viridis')
-    ax3.set_aspect('equal')
-    c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
-    c3.set_label('[nm]')
-    ax3.set_title(f"8nn fall extension: residual \nPV =  {np.round((np.max(Z_residual_ca_8nn_fall) - np.min(Z_residual_ca_8nn_fall)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_8nn_fall) * 1e9, 2)} nm")
-    ax3.set_xlim(ax2.get_xlim())
-    ax3.set_ylim(ax2.get_ylim())
-    
-    ax4 = fig.add_subplot(grid[4,3])
-    mesh4 = ax4.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_removal_dw_8nn_fall * 1e9, cmap='viridis')
-    ax4.set_aspect('equal')
-    c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
-    c4.set_label('[nm]')
-    ax4.set_title(f"8nn fall extension: removal \nPV =  {np.round((np.max(Z_removal_dw_8nn_fall) - np.min(Z_removal_dw_8nn_fall)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_8nn_fall) * 1e9, 2)} nm")
-
-    fig.tight_layout()
-    ax1.invert_yaxis()
-    ax2.invert_yaxis()
-    ax3.invert_yaxis()
-    ax4.invert_yaxis()
 
 if selection_savejson[3]:
     simulated_result = {map_name[0]:Z_8nn_fall* 1e9,map_name[1]:T_8nn_fall,map_name[2]:Z_residual_ca_8nn_fall* 1e9,map_name[3]:Z_removal_dw_8nn_fall* 1e9}
     for i_name in range(0, len(map_name)):
-        Scanfile_Savejson(folderjson+'/Gordo-B_202303021_test_8nn_fall_extension_'+map_name[i_name],
+        Scanfile_Savejson(folderjson+'/'+testname+'_8nn_fall_extension_'+map_name[i_name],
                           X_ext, Y_ext, simulated_result[map_name[i_name]],
-                          testname='Gordo-B_20230306_test', data_from='HD-X', calculation='RIFTA',
+                          testname=testname, data_from='HD-X', calculation='RIFTA',
                           grid = m_per_pixel*1E3 ,dwell_time_unit = 's',
                           height_error_filter = 0, brf_params=brf_params,
                           x_start = np.min(X)*1e3,y_start = np.min(Y)*1e3,
