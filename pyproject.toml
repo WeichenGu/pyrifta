@@ -19,3 +19,6 @@ dependencies = [
     "pymurilo @ git+ssh://git@gitlab.diamond.ac.uk/jtw45929/pymurilo.git",
     "ibfanalysis @ git+ssh://git@gitlab.diamond.ac.uk/optics-ibf/dls-optics-ibf-analysis.git"
 ]
+
+[tool.setuptools]
+packages = ["lib_rifta"]
