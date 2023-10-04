@@ -58,11 +58,13 @@ def objective_func_entire(gamma, Z_to_remove, B, dw_range, ca_range, use_DCT):
     Tms = dwell_time_2d_fft_inverse_filter(Z_to_remove, B, gamma, use_DCT)
 
     T = np.zeros(Z_to_remove.shape)
-    T[dw_range['y_s']:dw_range['y_e']+1, dw_range['x_s']:dw_range['x_e']+1] = Tms[dw_range['y_s']:dw_range['y_e']+1, dw_range['x_s']:dw_range['x_e']+1]
+    # T[dw_range['y_s']:dw_range['y_e']+1, dw_range['x_s']:dw_range['x_e']+1] = Tms[dw_range['y_s']:dw_range['y_e']+1, dw_range['x_s']:dw_range['x_e']+1]
+    T[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']] = Tms[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']]
+    
     print('no')
     Z_removal = conv_fft2(T, B)
     # Z_removal = fftconvolve(T, B, mode='same')
-    Z_residual_ca = Z_to_remove[ca_range['y_s']:ca_range['y_e']+1, ca_range['x_s']:ca_range['x_e']+1] - Z_removal[ca_range['y_s']:ca_range['y_e']+1, ca_range['x_s']:ca_range['x_e']+1]
+    Z_residual_ca = Z_to_remove[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']] - Z_removal[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
 
     fGamma = np.nanstd(Z_residual_ca)
 
