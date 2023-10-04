@@ -22,7 +22,7 @@ def Surface_Extension_Gauss(X, Y, Z, brf_params, Z_tif):
     m_ext = int(np.floor(brf_params['lat_res_brf'] * (Z_tif.shape[0]) * 0.5 / surf_mpp))
     n_ext = int(np.floor(brf_params['lat_res_brf'] * (Z_tif.shape[1]) * 0.5 / surf_mpp))
 
-    ca_range = {'v_s': m_ext+1, 'v_e': m_ext+m, 'u_s': n_ext+1, 'u_e': n_ext+n}
+    ca_range = {'y_s': m_ext, 'y_e': m_ext+m, 'x_s': n_ext, 'x_e': n_ext+n}
 
     # Initial extension matrices
     X_ext, Y_ext = np.meshgrid(np.arange(-n_ext, n-1+n_ext+1), np.arange(-m_ext, m-1+m_ext+1))
@@ -30,7 +30,7 @@ def Surface_Extension_Gauss(X, Y, Z, brf_params, Z_tif):
     Y_ext = Y_ext * surf_mpp + Y[-1,-1]
     Z_ext = np.empty_like(X_ext, dtype=float)
     Z_ext[:] = np.nan
-    Z_ext[ca_range['v_s']-1:ca_range['v_e'], ca_range['u_s']-1:ca_range['u_e']] = Z
+    Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']] = Z
 
     # Finding edge points
     id_edg = Surface_Extension_EdgeExtraction(Z_ext)
