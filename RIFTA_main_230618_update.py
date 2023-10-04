@@ -43,7 +43,8 @@ from lib_rifta import Scanfile_Savejson
 from lib_rifta import Generate_pvt_from_json
 from lib_rifta.ibf_engine.remove_surface1 import remove_surface1
 from lib_rifta.ibf_engine.conv_fft2 import conv_fft2
-
+from lib_rifta.surface_extension_2d import Surface_Extension_Iter
+from lib_rifta.surface_extension_2d import Surface_Extension_Iter_freq
 
 # from mpl_toolkits.mplot3d import Axes3D
 
@@ -172,7 +173,7 @@ options = {
     'samplingInterval': dx_ibf
 }
 
-selection = [True, True, True, True, True, False, False, False]
+selection = [True, True, True, True, True, True, False, True]
 selection_savejson = [False, False, False, False, False, False, False, False]
 
 
@@ -190,7 +191,7 @@ u, v = np.meshgrid(np.arange(-r, r+1), np.arange(-r, r+1))
 coors = np.vstack((u.flatten(), v.flatten())).T
 rr = np.linalg.norm(coors,axis=1).reshape(u.shape)
 se = rr <= r
-BW_Z = binary_dilation(~np.isnan(Z_0), structure=se)
+BW_Z = binary_dilation(~np.isnan(Z_ext), structure=se)
 id_ext = BW_Z == 0
 
 
@@ -280,6 +281,28 @@ if selection[3]:
 
 #%% 
 
+# 5 SMOOTH
+'''
+if selection[4]:
+    _, _, Z_smooth, _ = Surface_Extension(X, Y, Z, brf_params, Z_avg, 'smooth', False)
+
+    _, _, _, _, _, T_smooth, _, _, _, _, _, _, _, _, _, _, _, _, _, _ = \
+        DwellTime2D_FFT_Full_Test(
+            X_ext, Y_ext, Z_smooth, 0, brf_params.copy(), brf_mode, X_brf, Y_brf, Z_avg, ca_range,
+            pixel_m, tmin, tmax, options, ratio, False
+        )
+
+    T_smooth[id_ext] = 0
+    # Z_removal_dw_8nn_fall = scipy.signal.fftconvolve(T_8nn_fall, B, mode='same')
+    Z_removal_dw_smooth = conv_fft2(T_smooth, B)
+    # Z_gp = remove_surface1(X_ext, Y_ext, Z_smooth)
+    Z_smooth = Z_smooth - np.nanmin(Z_smooth)
+    Z_residual_dw = Z_smooth - Z_removal_dw_smooth
+    Z_residual_ca_smooth = Z_residual_dw[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
+    Z_residual_ca_smooth = remove_surface1(X_ca, Y_ca, Z_residual_ca_smooth)
+'''
+#%% 
+
 # 5 GP
 if selection[4]:
     _, _, Z_gp, _ = Surface_Extension(X, Y, Z, brf_params, Z_avg, 'gerchberg', False, np.arange(-18, 19), np.arange(-3, 4))
@@ -299,6 +322,28 @@ if selection[4]:
     Z_residual_ca_gp = Z_residual_dw[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
     Z_residual_ca_gp = remove_surface1(X_ca, Y_ca, Z_residual_ca_gp)
 
+#%% 
+
+# 6 iter
+poly_order = 10
+
+if selection[5]: 
+    if run_iter:
+        T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter_freq(
+            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 2e-10, X_brf, Y_brf, Z_avg,
+            'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
+            'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
+            cutoff_freq = 1.15
+        )
+    
+    # if 'T_min' in locals():
+    #     T_iter = T_iter - np.min(T_iter) + T_min
+
+    Z_removal_dw_iter = conv_fft2(T_iter, B)
+    
+    Z_residual_ca_iter[np.isnan(Z)] = np.nan
+  
+    Z_residual_ca_iter = remove_surface1(X_ca, Y_ca, Z_residual_ca_iter)
 
 
 #%%
@@ -309,8 +354,12 @@ if selection[4]:
 
 map_height = 1 + np.count_nonzero(selection)
 map_name = ['height_error', 'dwell_time', 'residual', 'removal']
+axes_dict = {}
+
+
+
 grid = plt.GridSpec(map_height, 4)
-fig = plt.figure("One-step surface extension dwell time results",figsize=(16,12),dpi=800)
+fig = plt.figure("One-step surface extension dwell time results",figsize=(16,18),dpi=800)
 #Original surface
 ax0 = fig.add_subplot(grid[0,0:2])
 mesh0 = ax0.pcolormesh(X * 1e3, Y * 1e3, Z * 1e9, cmap='viridis')
@@ -378,7 +427,12 @@ if selection[0]:
     ax3.invert_yaxis()
     ax4.invert_yaxis()
     fig.tight_layout()
-
+    axes_dict['zlim'] = (
+        ax1.collections[0].get_clim(),
+        ax2.collections[0].get_clim(),
+        ax3.collections[0].get_clim(),
+        ax4.collections[0].get_clim())
+    
 if selection_savejson[0]:
     simulated_result = {map_name[0]:Z_0* 1e9,map_name[1]:T_0,map_name[2]:Z_residual_ca_0* 1e9,map_name[3]:Z_removal_dw_0* 1e9}
 
@@ -439,6 +493,11 @@ if selection[1]:
     ax3.invert_yaxis()
     ax4.invert_yaxis()
 
+    ax1.collections[0].set_clim(axes_dict['zlim'][0])
+    ax2.collections[0].set_clim(axes_dict['zlim'][1])
+    ax3.collections[0].set_clim(axes_dict['zlim'][2])
+    ax4.collections[0].set_clim(axes_dict['zlim'][3])
+    
 if selection_savejson[1]:
     simulated_result = {map_name[0]:Z_gauss* 1e9,map_name[1]:T_gauss,map_name[2]:Z_residual_ca_gauss* 1e9,map_name[3]:Z_removal_dw_gauss* 1e9}
 
@@ -495,6 +554,12 @@ if selection[2]:
     ax3.invert_yaxis()
     ax4.invert_yaxis()
 
+    ax1.collections[0].set_clim(axes_dict['zlim'][0])
+    ax2.collections[0].set_clim(axes_dict['zlim'][1])
+    ax3.collections[0].set_clim(axes_dict['zlim'][2])
+    ax4.collections[0].set_clim(axes_dict['zlim'][3])
+    
+    
 if selection_savejson[2]:
     simulated_result = {map_name[0]:Z_8nn* 1e9,map_name[1]:T_8nn,map_name[2]:Z_residual_ca_8nn* 1e9,map_name[3]:Z_removal_dw_8nn* 1e9}
     for i_name in range(0, len(map_name)):
@@ -549,6 +614,12 @@ if selection[3]:
     ax3.invert_yaxis()
     ax4.invert_yaxis()
 
+    ax1.collections[0].set_clim(axes_dict['zlim'][0])
+    ax2.collections[0].set_clim(axes_dict['zlim'][1])
+    ax3.collections[0].set_clim(axes_dict['zlim'][2])
+    ax4.collections[0].set_clim(axes_dict['zlim'][3])
+    
+    
 if selection_savejson[3]:
     simulated_result = {map_name[0]:Z_8nn_fall* 1e9,map_name[1]:T_8nn_fall,map_name[2]:Z_residual_ca_8nn_fall* 1e9,map_name[3]:Z_removal_dw_8nn_fall* 1e9}
     for i_name in range(0, len(map_name)):
@@ -563,13 +634,14 @@ if selection_savejson[3]:
                           fitresult=BRFfitting)
 
 
+
 if selection[4]:
     ax1 = fig.add_subplot(grid[5,0])
     mesh1 = ax1.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_gp * 1e9, cmap='viridis')
     ax1.set_aspect('equal')
     c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
     c1.set_label('[nm]')
-    ax1.set_title(f"gp extension: \nPV = {np.round((np.max(Z_gp) - np.min(Z_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_gp) * 1e9, 2)} nm")
+    ax1.set_title(f"GP extension: \nPV = {np.round((np.max(Z_gp) - np.min(Z_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_gp) * 1e9, 2)} nm")
     # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
 
     # Other subplots and operations...
@@ -579,7 +651,7 @@ if selection[4]:
     ax2.set_aspect('equal')
     c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
     c2.set_label('[s]')
-    ax2.set_title(f"8nn fall extension: \ndwell time =  {np.round((np.sum(T_gp)), 2)} s")
+    ax2.set_title(f"GP extension: \ndwell time =  {np.round((np.sum(T_gp)), 2)} s")
 
 
     ax3 = fig.add_subplot(grid[5,2])
@@ -587,7 +659,7 @@ if selection[4]:
     ax3.set_aspect('equal')
     c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
     c3.set_label('[nm]')
-    ax3.set_title(f"8nn fall extension: residual \nPV =  {np.round((np.max(Z_residual_ca_gp) - np.min(Z_residual_ca_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_gp) * 1e9, 2)} nm")
+    ax3.set_title(f"GP extension: residual \nPV =  {np.round((np.max(Z_residual_ca_gp) - np.min(Z_residual_ca_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_gp) * 1e9, 2)} nm")
     ax3.set_xlim(ax2.get_xlim())
     ax3.set_ylim(ax2.get_ylim())
     
@@ -596,7 +668,7 @@ if selection[4]:
     ax4.set_aspect('equal')
     c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
     c4.set_label('[nm]')
-    ax4.set_title(f"8nn fall extension: removal \nPV =  {np.round((np.max(Z_removal_dw_gp) - np.min(Z_removal_dw_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_gp) * 1e9, 2)} nm")
+    ax4.set_title(f"GP extension: removal \nPV =  {np.round((np.max(Z_removal_dw_gp) - np.min(Z_removal_dw_gp)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_gp) * 1e9, 2)} nm")
 
     fig.tight_layout()
     ax1.invert_yaxis()
@@ -604,6 +676,13 @@ if selection[4]:
     ax3.invert_yaxis()
     ax4.invert_yaxis()
 
+
+    ax1.collections[0].set_clim(axes_dict['zlim'][0])
+    ax2.collections[0].set_clim(axes_dict['zlim'][1])
+    ax3.collections[0].set_clim(axes_dict['zlim'][2])
+    ax4.collections[0].set_clim(axes_dict['zlim'][3])
+    
+    
 if selection_savejson[4]:
     simulated_result = {map_name[0]:Z_gp* 1e9,map_name[1]:T_gp,map_name[2]:Z_residual_ca_gp* 1e9,map_name[3]:Z_removal_dw_gp* 1e9}
     for i_name in range(0, len(map_name)):
@@ -616,6 +695,73 @@ if selection_savejson[4]:
                           selected_region_length = selected_region_length,
                           selected_region_width = selected_region_width,
                           fitresult=BRFfitting)
+
+
+if selection[5]:
+    ax1 = fig.add_subplot(grid[6,0])
+    mesh1 = ax1.pcolormesh(X * 1e3, Y * 1e3, Z * 1e9, cmap='viridis')
+    ax1.set_aspect('equal')
+    c1 = plt.colorbar(mesh1, ax=ax1, pad=0.05)
+    c1.set_label('[nm]')
+    ax1.set_title(f"Iterative extension: \nPV = {np.round((np.max(Z_iter) - np.min(Z_iter)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_iter) * 1e9, 2)} nm")
+    # fig.subplots_adjust(top=1, bottom=0.1, left=0.1, right=0.9, hspace=0.5, wspace=0.5)
+
+    # Other subplots and operations...
+    # ...
+    ax2 = fig.add_subplot(grid[6,1])
+    mesh2 = ax2.pcolormesh(X_ext * 1e3, Y_ext * 1e3, T_iter, cmap='viridis')
+    ax2.set_aspect('equal')
+    c2 = plt.colorbar(mesh2, ax=ax2, pad=0.05)
+    c2.set_label('[s]')
+    ax2.set_title(f"Iterative extension: \ndwell time =  {np.round((np.sum(T_iter)), 2)} s")
+
+
+    ax3 = fig.add_subplot(grid[6,2])
+    mesh3 = ax3.pcolormesh(X * 1e3, Y * 1e3, Z_residual_ca_iter * 1e9, cmap='viridis')
+    ax3.set_aspect('equal')
+    c3 = plt.colorbar(mesh3, ax=ax3, pad=0.05)
+    c3.set_label('[nm]')
+    ax3.set_title(f"Iterative extension: residual \nPV =  {np.round((np.max(Z_residual_ca_iter) - np.min(Z_residual_ca_iter)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_residual_ca_iter) * 1e9, 2)} nm")
+    ax3.set_xlim(ax2.get_xlim())
+    ax3.set_ylim(ax2.get_ylim())
+    
+    ax4 = fig.add_subplot(grid[6,3])
+    mesh4 = ax4.pcolormesh(X_ext * 1e3, Y_ext * 1e3, Z_removal_dw_iter * 1e9, cmap='viridis')
+    ax4.set_aspect('equal')
+    c4 = plt.colorbar(mesh4, ax=ax4, pad=0.05)
+    c4.set_label('[nm]')
+    ax4.set_title(f"Iterative extension: removal \nPV =  {np.round((np.max(Z_removal_dw_iter) - np.min(Z_removal_dw_iter)) * 1e9, 2)} nm, RMS = {np.round(np.std(Z_removal_dw_iter) * 1e9, 2)} nm")
+
+    fig.tight_layout()
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
+    ax4.invert_yaxis()
+    
+    # ax1.collections[0].set_clim(axes_dict['zlim'][0])  #no extension for CA
+    ax2.collections[0].set_clim(axes_dict['zlim'][1])
+    ax3.collections[0].set_clim(axes_dict['zlim'][2])
+    ax4.collections[0].set_clim(axes_dict['zlim'][3])
+    
+if selection_savejson[5]:
+    simulated_result = {map_name[0]:Z_iter* 1e9,map_name[1]:T_iter,map_name[2]:Z_residual_ca_iter* 1e9,map_name[3]:Z_removal_dw_iter* 1e9}
+    for i_name in range(0, len(map_name)):
+        Scanfile_Savejson(folderjson+'/'+testname+'_iter_extension_'+map_name[i_name],
+                          X_ext, Y_ext, simulated_result[map_name[i_name]],
+                          testname=testname, data_from='HD-X', calculation='RIFTA',
+                          grid = m_per_pixel*1E3 ,dwell_time_unit = 's',
+                          height_error_filter = 0, brf_params=brf_params,
+                          x_start = np.min(X)*1e3,y_start = np.min(Y)*1e3,
+                          selected_region_length = selected_region_length,
+                          selected_region_width = selected_region_width,
+                          fitresult=BRFfitting)
+
+
+
+
+
+
+
 
 
 
