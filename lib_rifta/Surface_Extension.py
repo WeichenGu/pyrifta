@@ -23,8 +23,9 @@ def Surface_Extension(X, Y, Z, brf_params, Z_tif, method='smooth', isFall=False,
     from .surface_extension_2d.Surface_Extension_8NN import Surface_Extension_8NN
     from .surface_extension_2d.Surface_Extension_EdgeExtraction import Surface_Extension_EdgeExtraction
     from .surface_extension_2d.Surface_Extension_Fall import Surface_Extension_Fall
- 
-    
+    from .surface_extension_2d.Surface_Extension_GP import Surface_Extension_GP
+    from .surface_extension_2d.Surface_Extension_Smooth import Surface_Extension_Smooth
+    from .surface_extension_2d.Surface_Extension_Polyfit import Surface_Extension_Polyfit
     
     # Default parameters
     if method is None:
@@ -38,20 +39,20 @@ def Surface_Extension(X, Y, Z, brf_params, Z_tif, method='smooth', isFall=False,
         X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Zeros(X, Y, Z, brf_params['lat_res_brf'], Z_tif)
     elif method == '8nn':
         X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_8NN(X, Y, Z, brf_params['lat_res_brf'], Z_tif)
-    # elif method == 'smooth':
-    #     X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Smooth(X, Y, Z, brf_params.lat_res_brf, Z_tif)
+    elif method == 'smooth':
+        X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Smooth(X, Y, Z, brf_params['lat_res_brf'], Z_tif)
     elif method == 'gauss':
         X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Gauss(X, Y, Z, brf_params, Z_tif)
-    # elif method == 'gerchberg':
-    #     if fu_range is None or fv_range is None:
-    #         raise ValueError("Not enough parameters for Gerchberg algorithm: fu_range and fv_range should be fed.")
-    #     else:
-    #         X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_GP(X, Y, Z, brf_params.lat_res_brf, Z_tif, fu_range, fv_range)
-    # elif method == 'poly':
-    #     if order_m is None or order_n is None or poly_type is None:
-    #         raise ValueError("Not enough parameters for polynomial fitting algorithm: order_m, order_n, and type should be fed.")
-    #     else:
-    #         X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Polyfit(X, Y, Z, brf_params.lat_res_brf, Z_tif, order_m, order_n, poly_type)
+    elif method == 'gerchberg':
+        if fu_range is None or fv_range is None:
+            raise ValueError("Not enough parameters for Gerchberg algorithm: fu_range and fv_range should be fed.")
+        else:
+            X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_GP(X, Y, Z, brf_params['lat_res_brf'], Z_tif, fu_range, fv_range)
+    elif method == 'poly':
+        if order_m is None or order_n is None or poly_type is None:
+            raise ValueError("Not enough parameters for polynomial fitting algorithm: order_m, order_n, and type should be fed.")
+        else:
+            X_ext, Y_ext, Z_ext, ca_range = Surface_Extension_Polyfit(X, Y, Z, brf_params['lat_res_brf'], Z_tif, order_m, order_n, poly_type)
     else:
         raise ValueError("Invalid algorithm selected.")
     
