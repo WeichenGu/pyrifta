@@ -13,6 +13,7 @@ from scipy.signal import fftconvolve
 from lib_rifta import BRFGaussian2D
 # from lib_rifta import ibf_engine
 from lib_rifta.ibf_engine import DwellTime2D_FFT_IterativeFFT
+from lib_rifta.ibf_engine import DwellTime2D_FFT_Test
 from lib_rifta.ibf_engine import remove_surface1
 from lib_rifta.ibf_engine import dwell_time_2d_assemble_c_d
 
@@ -56,8 +57,10 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
     X_B, Y_B = np.meshgrid(np.arange(-brf_r, np.round(brf_r,12), pixel_m),
                            np.arange(-brf_r, np.round(brf_r,12), pixel_m))
     # Get B
+    # X_BRF_2d, Y_BRF_2d = np.meshgrid(X_BRF, Y_BRF)
     if BRF_mode.lower() == 'avg':
-        B = interp2d(X_BRF, Y_BRF, Z_BRF, kind='cubic')(X_B, Y_B)
+        # B = interp2d(X_BRF, Y_BRF, Z_BRF, kind='cubic')(X_B, Y_B)
+        B = interp2d(X_BRF, Y_BRF, Z_BRF, kind='cubic')(np.unique(X_B), np.unique(Y_B))
     else:
         B = BRFGaussian2D(X_B, Y_B, 1, [A,sigma_xy,mu_xy[0],mu_xy[1]])
     
@@ -97,23 +100,23 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
         dwellTime_dif = options["dwellTime_dif"]
         
         _, Z_removal, Z_residual, T_P, Z_to_remove_dw, Z_removal_dw,Z_residual_dw,Z_to_remove_ca,Z_removal_ca, Z_residual_ca = DwellTime2D_FFT_IterativeFFT(Z_to_remove, B, dw_range, ca_range, maxIters, PV_dif, RMS_dif,dwellTime_dif)
-    '''      
-    elif options["Algorithm"] == "Iterative-FFT-Optimal-DwellTime":
-        maxIters = options["maxIters"]
-        PV_dif = options["PV_dif"]
-        RMS_dif = options["RMS_dif"]
-        dwellTime_dif = options["dwellTime_dif"]
+    
+    # elif options["Algorithm"] == "Iterative-FFT-Optimal-DwellTime":
+    #     maxIters = options["maxIters"]
+    #     PV_dif = options["PV_dif"]
+    #     RMS_dif = options["RMS_dif"]
+    #     dwellTime_dif = options["dwellTime_dif"]
         
-        (_, Z_removal, Z_residual, dw_range, X_dw, Y_dw, T_P, Z_to_remove_dw,
-         Z_removal_dw, Z_residual_dw,
-         Z_to_remove_ca, Z_removal_ca,
-         Z_residual_ca)= DwellTime2D_FFT_IterativeFFT_Optimal_DwellTime(Z_to_remove, X, Y, B, BRF_params, ca_range, maxIters, PV_dif, RMS_dif, dwellTime_dif)
-        
+    #     (_, Z_removal, Z_residual, dw_range, X_dw, Y_dw, T_P, Z_to_remove_dw,
+    #      Z_removal_dw, Z_residual_dw,
+    #      Z_to_remove_ca, Z_removal_ca,
+    #      Z_residual_ca)= DwellTime2D_FFT_IterativeFFT_Optimal_DwellTime(Z_to_remove, X, Y, B, BRF_params, ca_range, maxIters, PV_dif, RMS_dif, dwellTime_dif)
+  
     elif options["Algorithm"] == "FFT":
         _, Z_removal, Z_residual, T_P, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, Z_to_remove_ca, Z_removal_ca, Z_residual_ca = DwellTime2D_FFT_Test(Z_to_remove, Z_last_removal_dw, B, dw_range, ca_range)
     else:
         raise ValueError("Invalid FFT algorithm chosen. Should be either Iterative-FFT or FFT")
-    '''
+
     T_P = T_P * ratio
     
     # output
@@ -180,9 +183,9 @@ def DwellTime2D_FFT_Full_Test(X, Y, Z_to_remove, Z_last_removal_dw, BRF_params, 
     
             # Dwell grid
     else:
-            X_P = X_dw;
-            Y_P = Y_dw;   
-            T_P_Real = T_P;
+            X_P = X_dw
+            Y_P = Y_dw 
+            T_P_Real = T_P
             return B, X_B, Y_B, Z_removal, Z_residual, T_P, T_P_Real, X_P, Y_P, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
          
     return B, X_B, Y_B, Z_removal, Z_residual, T_P, _, _, _, X_dw, Y_dw, dw_range, Z_to_remove_dw, Z_removal_dw, Z_residual_dw, X_ca, Y_ca, Z_to_remove_ca, Z_removal_ca, Z_residual_ca        
