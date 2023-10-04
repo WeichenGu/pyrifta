@@ -40,8 +40,9 @@ def dwell_time_2d_fft_iterative_fft_one_iter(Z_to_remove, B, hBias, dw_range, ca
     Z_removal = conv_fft2(T,B)
     
     Z_removal_ca = Z_removal[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
-    # bcs the difference between index of python and matlab
-    Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s-1:ca_in_dw_y_e-1, ca_in_dw_x_s-1:ca_in_dw_x_e-1]
+    # bcs the difference between index of python and matlab, subtract 1 
+    # Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s-1:ca_in_dw_y_e-1, ca_in_dw_x_s-1:ca_in_dw_x_e-1]
+    Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s:ca_in_dw_y_e, ca_in_dw_x_s:ca_in_dw_x_e]
 
     #Get gamma0
     gamma0 = np.nanstd(Z_to_remove_ca) / np.nanstd(Z_removal_ca)
@@ -58,7 +59,8 @@ def dwell_time_2d_fft_iterative_fft_one_iter(Z_to_remove, B, hBias, dw_range, ca
     # Z_removal = convolve2d(T, B, mode='same')
     # Z_removal = scipy.signal.fftconvolve(T, B, mode='same')
     Z_removal = conv_fft2(T,B)
-    Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s-1:ca_in_dw_y_e-1, ca_in_dw_x_s-1:ca_in_dw_x_e-1]
+    # Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s-1:ca_in_dw_y_e-1, ca_in_dw_x_s-1:ca_in_dw_x_e-1]
+    Z_to_remove_ca = Z_to_remove_dw[ca_in_dw_y_s:ca_in_dw_y_e, ca_in_dw_x_s:ca_in_dw_x_e]
 
     # Obtain the entire aperture result
     Z_residual = Z_to_remove - Z_removal
