@@ -48,7 +48,7 @@ def dwell_time_2d_fft_iterative_fft_one_iter(Z_to_remove, B, hBias, dw_range, ca
     gamma0 = np.nanstd(Z_to_remove_ca) / np.nanstd(Z_removal_ca)
 
     #Get optimized gamma
-    gamma = dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, 'dwell', False)
+    gamma = dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, 'dwell', True)
 
     T_dw = dwell_time_2d_fft_inverse_filter(Z_to_remove_dw, B, gamma, False)
 

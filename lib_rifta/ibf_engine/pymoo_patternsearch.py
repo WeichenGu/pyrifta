@@ -75,8 +75,11 @@ def pymoo_minimize_dwell_grid(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, 
     # val = res.algorithm.callback.data["best"]
     # plt.plot(np.arange(len(val)), val)
     val = [e.opt.get("F")[0] for e in res.history]
+    
+    print("Best solution found: \nX = {} \nF = {}".format(res.X, res.F))
+    
     if iter_show:
-        print("Best solution found: \nX = {} \nF = {}".format(res.X, res.F))
+        
         plt.plot(np.arange(len(val)), val)
     
         plt.xlabel('Iteration')
