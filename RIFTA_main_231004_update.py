@@ -325,15 +325,14 @@ if selection[4]:
 #%% 
 
 # 6 iter
-poly_order = 2
+poly_order = 7
 
 if selection[5]: 
     if run_iter:
-        T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter_freq(
+        T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter(
             X, Y, Z, brf_params.copy(), 'avg', 1e-3, 1e-10, X_brf, Y_brf, Z_avg,
             'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
-            'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
-            cutoff_freq = 1.3
+            'poly', False, [], [], poly_order, poly_order, 'Chebyshev'
         )
     
     # if 'T_min' in locals():
