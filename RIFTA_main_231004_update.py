@@ -89,8 +89,8 @@ folderjson = '../simu_data/'+datetime.datetime.now().strftime("%Y-%m-%d")+'/'+'G
 
 json_path = folderjson + '/'
 # pvt load file
-# pvt_gen = True
-pvt_gen = False
+
+pvt_gen = True
 json_data_filename = testname+"_8nn_extension_dwell_time.json"
 
 
@@ -191,7 +191,7 @@ u, v = np.meshgrid(np.arange(-r, r+1), np.arange(-r, r+1))
 coors = np.vstack((u.flatten(), v.flatten())).T
 rr = np.linalg.norm(coors,axis=1).reshape(u.shape)
 se = rr <= r
-BW_Z = binary_dilation(~np.isnan(Z_ext), structure=se)
+BW_Z = binary_dilation(~np.isnan(Z_0), structure=se)
 id_ext = BW_Z == 0
 
 
@@ -325,15 +325,15 @@ if selection[4]:
 #%% 
 
 # 6 iter
-poly_order = 10
+poly_order = 2
 
 if selection[5]: 
     if run_iter:
         T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter_freq(
-            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 2e-10, X_brf, Y_brf, Z_avg,
+            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 1e-10, X_brf, Y_brf, Z_avg,
             'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
             'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
-            cutoff_freq = 1.15
+            cutoff_freq = 1.3
         )
     
     # if 'T_min' in locals():
@@ -757,15 +757,18 @@ if selection_savejson[5]:
                           fitresult=BRFfitting)
 
 
+plt.show()
 
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
-
-
-
-
-
+ax.plot_surface(X_ext, Y_ext, Z_removal_dw_gauss, cmap='viridis')
 
 plt.show()
+
+
+
+
 
 
 
@@ -774,5 +777,14 @@ plt.show()
 if pvt_gen:
     pvt2d_set = Generate_pvt_from_json(json_path = json_path,
                                data_filename = json_data_filename,
-                               run_in =60,
-                               n_points =101)
+                               run_in =20,
+                               n_points =751,
+                               plot2d = True, plot1d = True)
+    
+    
+    
+    
+    
+    
+    
+    
