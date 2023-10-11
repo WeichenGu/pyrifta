@@ -80,14 +80,14 @@ def Generate_pvt_from_json(
     pvt_filename = "v10test_10runin"+data_filename +"_pvt_" +str(pvt2d.total_points)+".json"
     
     # pvt_filename = r"Non_inputIBF_trapz_c20_l95_8NN_extension_dwell time_pvt_1396062.json"
-    pvt2d.write_profile(json_path, data_filename)
+    pvt2d.write_profile(json_path, pvt_filename)
     
     
     # In[6]:
     
     # base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230619_trapz_P001/"
     
-    path = os.path.join(json_path, data_filename)
+    path = os.path.join(json_path, pvt_filename)
     
     with open(path, 'r') as f:
         data_pvt = json.load(f)
@@ -193,4 +193,4 @@ def Generate_pvt_from_json(
     
     
     
-    return dwell_z, dwell_y, pvt2d
+    return dwell_z, dwell_y, pvt2d, path
