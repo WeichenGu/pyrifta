@@ -48,7 +48,7 @@ from lib_rifta.surface_extension_2d import Surface_Extension_Iter_freq
 
 #%% BRF params
 
-brf_type = "supergaussian";
+brf_type = "supergaussian"
 brf_params = {}
 m_per_pixel = 4.569341e-05
 if 'input_BRF' in locals():
