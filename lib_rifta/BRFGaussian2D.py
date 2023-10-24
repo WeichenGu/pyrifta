@@ -12,7 +12,8 @@ def BRFGaussian2D(X, Y, t, params):
     2D Gaussian Beam removal function model:
     Z(X, Y) = tt*A*exp(-((X-u_x)^2/2*sigma_x^2+(Y-u_y)^2/2*sigma_y^2))
     """
-    if isinstance(t, list):
+
+    if isinstance(t,list):
         pass
     else:
         t=[t]

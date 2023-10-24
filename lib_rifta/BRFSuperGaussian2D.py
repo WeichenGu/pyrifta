@@ -14,7 +14,10 @@ def BRFSuperGaussian2D(X, Y, t, params):
     Returns:
     - Z_fitted: 2D matrix or 1D array of the calculated 2D Super Gaussian function map [m]
     """
-    
+    if isinstance(t,list):
+        pass
+    else:
+        t=[t]
     # Get the parameters
     A = params[0]
     sigmax = params[1][0]
@@ -26,7 +29,7 @@ def BRFSuperGaussian2D(X, Y, t, params):
     # Initialize result
     Z_fitted = np.zeros(X.shape)
 
-    for i in range(len(str(t))):
-        Z_fitted = A * t * np.exp(-0.5 * (((X[:, :] - ux[i]) / sigmax) ** 2 + ((Y[:, :] - uy[i]) / sigmay) ** 2) ** p)
+    for i in range(len(t)):
+        Z_fitted = A * t[i] * np.exp(-0.5 * (((X[:, :] - ux[i]) / sigmax) ** 2 + ((Y[:, :] - uy[i]) / sigmay) ** 2) ** p)
 
     return Z_fitted
