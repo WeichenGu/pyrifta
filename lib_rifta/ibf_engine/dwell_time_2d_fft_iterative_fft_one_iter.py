@@ -27,7 +27,7 @@ def dwell_time_2d_fft_iterative_fft_one_iter(Z_to_remove, B, hBias, dw_range, ca
     Z_to_remove = Z_to_remove - np.nanmin(Z_to_remove_ca)
     Z_to_remove_dw = Z_to_remove[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']] + hBias
 
-    # You'll need to implement 'dwell_time_2d_fft_inverse_filter' function here
+
     T_dw = dwell_time_2d_fft_inverse_filter(Z_to_remove_dw, B, 1, True)
 
     T = np.zeros_like(Z_to_remove)
