@@ -43,7 +43,7 @@ def dwell_time_2d_fft_optimize_gamma(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_
         #                  use_DCT = use_DCT)
         # result = basinhopping(objfun, gamma0, disp = False)
         gamma = result.x[0]'''
-        result = pymoo_minimize_dwell_grid(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, use_DCT, iter_show = False)
+        result = pymoo_minimize_dwell_grid(gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, use_DCT, iter_show = True)
         gamma = result.X
     else:
         gamma = gamma0

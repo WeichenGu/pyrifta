@@ -21,7 +21,7 @@ def DwellTime2D_FFT_Test(Z_to_remove, Z_last_removal_dw, B, dw_range, ca_range):
     Z_to_remove_dw = Z_to_remove[dw_range['y_s']:dw_range['y_e'], dw_range['x_s']:dw_range['x_e']]
     Z_to_remove_dw = Z_to_remove_dw - np.nanmin(Z_to_remove_dw + Z_last_removal_dw)
 
-    T_dw = dwell_time_2d_fft_inverse_filter_test(Z_to_remove_dw, B, 1, False)
+    T_dw = dwell_time_2d_fft_inverse_filter_test(Z_to_remove_dw, B, 1, True)
 
     # Initialize T
     T = np.zeros_like(Z_to_remove)
@@ -48,7 +48,7 @@ def DwellTime2D_FFT_Test(Z_to_remove, Z_last_removal_dw, B, dw_range, ca_range):
     print([gamma0, gamma])
      
     # 2. Use the optimal gamma to do the computation again
-    T_dw = dwell_time_2d_fft_inverse_filter_test(Z_to_remove_dw, B, gamma, False)
+    T_dw = dwell_time_2d_fft_inverse_filter_test(Z_to_remove_dw, B, gamma, True)
 
     # Initialize T with zeros and set the computed T_dw in the dwell grid region
     T = np.zeros_like(Z_to_remove)
