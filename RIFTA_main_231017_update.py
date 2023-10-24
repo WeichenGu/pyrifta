@@ -48,7 +48,7 @@ from lib_rifta.surface_extension_2d import Surface_Extension_Iter_freq
 
 #%% BRF params
 
-brf_type = "supergaussian"
+brf_type = "suergaussian"
 brf_params = {}
 m_per_pixel = 4.569341e-05
 if 'input_BRF' in locals():
@@ -102,10 +102,10 @@ elif 'brf_type' in locals():
 
 # load datx path
 include = ["Proc_IBF_HDX_data_Gordo-B_230406_AB_clamped_5_data_stitched_mask_rmv.datx"]
-base_path = r"C:/Users/Etrr/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
+base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
 
-include = ["DUNiP-S4-BRF_20230919_clamped_7_data_stitched_pss.datx"]
-base_path = r"C:/Users/Etrr/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230921_DUNiP_S4_7_P001"
+# include = ["DUNiP-S4-BRF_20230919_clamped_7_data_stitched_pss.datx"]
+# base_path = r"C:/Users/Etrr/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230921_DUNiP_S4_7_P001"
 
 # base_path = r"./"
 
