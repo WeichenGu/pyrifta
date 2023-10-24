@@ -36,7 +36,7 @@ def BRFGaussian2D(X, Y, t, params):
     for i in range(len(t)):
         # Z_fitted[:, :, i] = A*t*np.exp(-((X[:, :, i]-ux[i])**2/(2*sigmax**2) + (Y[:, :, i]-uy[i])**2/(2*sigmay**2)))
         # print(i)
-        Z_fitted += A*t[i]*np.exp(-((X[:,:]-ux[i])**2/(2*sigmax**2) + (Y[:,:]-uy[i])**2/(2*sigmay**2)))
+        Z_fitted = A*t[i]*np.exp(-((X[:,:]-ux[i])**2/(2*sigmax**2) + (Y[:,:]-uy[i])**2/(2*sigmay**2)))
 
     return Z_fitted
 
