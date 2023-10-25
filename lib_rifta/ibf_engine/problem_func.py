@@ -18,7 +18,7 @@ from lib_rifta.surface_extension_2d.frequency_separate_dct import frequency_sepa
 
 class Problem_func_dwell_grid(ElementwiseProblem):
     def __init__(self, gamma0, Z_to_remove, Z_to_remove_dw, B, dw_range, ca_range, use_DCT):
-        super().__init__(n_var=1, n_obj=1, n_constr=0)
+        super().__init__(n_var=1, n_obj=1, n_constr=1)
         #constraint xl=0, xu=2*gamma0
         self.gamma0 = gamma0
         self.Z_to_remove = Z_to_remove
@@ -30,6 +30,7 @@ class Problem_func_dwell_grid(ElementwiseProblem):
 
     def _evaluate(self, gamma0, out, *args, **kwargs):
         # gamma0 = x
+        # constraint1 = 0 - gamma0
         Z_to_remove = self.Z_to_remove
         Z_to_remove_dw = self.Z_to_remove_dw
         B = self.B
@@ -59,7 +60,7 @@ class Problem_func_dwell_grid(ElementwiseProblem):
         fGamma = np.nanstd(Z_residual_ca)
         # print(fGamma)
         out["F"] = fGamma
-
+        out["G"] = 1e-60 - gamma0
 
 class Problem_func_entire(ElementwiseProblem):
 
