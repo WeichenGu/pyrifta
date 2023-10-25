@@ -49,7 +49,7 @@ def frequency_separate_dct(X_selected_region, Y_selected_region, Z_region_b, lat
         ax1 = plt.subplot(2,2,(1,2))
         plt.pcolor(X_selected_region, Y_selected_region, Z_filled, shading='auto')
         
-        plt.title('Original Filled Data')
+        plt.title(f'Original Filled Data: RMS = {np.std(Z_filled):.2f} nm')
         plt.xlabel('X (mm)')
         plt.ylabel('Y (mm)')
         plt.colorbar()
