@@ -8,10 +8,85 @@ Created on Mon Oct  2 23:45:02 2023
 import numpy as np
 from scipy.interpolate import griddata
 from scipy.ndimage import binary_dilation
+from scipy import ndimage
 # from scipy.spatial.transform import Rotation as R
 # from scipy.interpolate import RectBivariateSpline
 # from scipy.interpolate import CloughTocher2DInterpolator as CT
 # from scipy.ndimage import binary_dilation
+
+
+
+import numpy as np
+from scipy import ndimage
+from scipy.interpolate import griddata
+
+
+
+def Surface_Extension_Smooth(X, Y, Z, tif_mpp, Z_tif):
+    # Obtain required parameters
+    surf_mpp = np.median(np.diff(X[0,:]))
+
+    m, n = Z.shape
+    m_ext = int(np.floor(tif_mpp * Z_tif.shape[0] * 0.5 / surf_mpp))
+    n_ext = int(np.floor(tif_mpp * Z_tif.shape[1] * 0.5 / surf_mpp))
+    r = max(m_ext, n_ext)
+
+    ca_range = {
+        'y_s': m_ext,
+        'y_e': m_ext + m,
+        'x_s': n_ext,
+        'x_e': n_ext + n
+    }
+
+    # Initial extension matrices
+    X_ext, Y_ext = np.meshgrid(np.arange(-n_ext, n + n_ext), np.arange(-m_ext, m + m_ext))
+    X_ext = X_ext * surf_mpp + X[0,0]
+    Y_ext = Y_ext * surf_mpp + Y[0,0]
+    Z_ext = np.full(X_ext.shape, np.nan)
+    Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']] = Z
+
+    u, v = np.meshgrid(np.arange(-r, r+1), np.arange(-r, r+1))
+    coors = np.vstack((u.flatten(), v.flatten())).T
+    rr = np.linalg.norm(coors,axis=1).reshape(u.shape)
+    se = rr <= r
+    BW_Z = binary_dilation(~np.isnan(Z_ext), structure=se)
+    id_ext = BW_Z == 1
+
+    points = np.column_stack((X[np.isfinite(Z)], Y[np.isfinite(Z)]))
+    values = Z[np.isfinite(Z)]
+    Z_ext = griddata(points, values, (X_ext, Y_ext), method='nearest')
+
+    return X_ext, Y_ext, Z_ext, ca_range
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
 
 
 def Surface_Extension_Smooth(X, Y, Z, tif_mpp, Z_tif):
@@ -52,6 +127,7 @@ def Surface_Extension_Smooth(X, Y, Z, tif_mpp, Z_tif):
     id_ext = BW_Z == 1
 
 
+
     # Interpolation
     # points = np.column_stack((X[id_valid].flatten(), Y[id_valid].flatten()))
     # values = Z[id_valid].flatten()
@@ -63,7 +139,11 @@ def Surface_Extension_Smooth(X, Y, Z, tif_mpp, Z_tif):
     # Z_ext = spline(X_ext, Y_ext, grid=True)
     # spline = RectBivariateSpline(X.flatten(), Y.flatten(), Z.flatten(), bbox=[min(np.unique(Y_ext)), max(np.unique(Y_ext)), min(np.unique(X_ext)), max(np.unique(X_ext))], kx=8, ky=8)
     # Z_ext = spline.ev(Y_ext, X_ext).reshape(X_ext.shape)
-    
+
+
+
+
+   
     def extrapolated_spline_2D_new(x0,y0,z2d0):    
         from scipy.interpolate import RectBivariateSpline
         assert z2d0.shape == (y0.shape[0],x0.shape[0])
@@ -98,3 +178,7 @@ def Surface_Extension_Smooth(X, Y, Z, tif_mpp, Z_tif):
     print('5')
     m = Z.shape[0] 
     return X_ext, Y_ext, Z_ext, ca_range
+
+
+
+'''
