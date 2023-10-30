@@ -6,17 +6,18 @@ Created on Tue Oct  3 19:06:30 2023
 """
 
 import numpy as np
-
+import matplotlib.pyplot as plt
 from scipy.ndimage import binary_dilation
 
 from lib_rifta import Surface_Extension
 from lib_rifta.DwellTime2D_FFT_Full_Test import DwellTime2D_FFT_Full_Test
 from lib_rifta.ibf_engine.remove_surface1 import remove_surface1
 from lib_rifta.ibf_engine.conv_fft2 import conv_fft2
+
 # from lib_rifta.surface_extension_2d import Chebyshev_XYnm
 # from lib_rifta.surface_extension_2d import Legendre_XYnm
 from lib_rifta.surface_extension_2d.frequency_separate_dct import frequency_separate_dct
-
+from lib_rifta.ibf_engine.pymoo_patternsearch import pymoo_minimize_cutoff_freq
 
 def Surface_Extension_Iter_freq(
     X, Y, Z,  # unextended surface error map
@@ -37,17 +38,32 @@ def Surface_Extension_Iter_freq(
     ):
 
     Z_ini = Z.copy()
-
-    _, Z_low_freq_data, Z_high_freq_data = frequency_separate_dct(
-        X*1e3, Y*1e3, Z*1e9, 1e3*(X[1,2]-X[1,1]),cutoff_freq,'yes');
+    cutoff_freq_ini = cutoff_freq
+    # cutoff_freq_res = pymoo_minimize_cutoff_freq(cutoff_freq_ini,
+    #     X, Y, Z.copy(), brf_params.copy(),
+    #     Z_tif,
+    #     init_ext_method, ini_is_fall,
+    #     ini_fu_range, ini_fv_range,
+    #     ini_order_m, ini_order_n,ini_type,
+    #     du_ibf, brf_mode, X_tif, Y_tif, iter_show=True)
     
+    # print(cutoff_freq_res.X)
+    
+    _, Z_low_freq_data, Z_high_freq_data = frequency_separate_dct(
+        X*1e3, Y*1e3, Z*1e9, 1e3*(X[1,2]-X[1,1]),cutoff_freq_ini,'yes');
+
+
+    
+    # _, Z_low_freq_data, Z_high_freq_data = frequency_separate_dct(
+    #     X*1e3, Y*1e3, Z*1e9, 1e3*(X[1,2]-X[1,1]),cutoff_freq_ini,'yes');
+ 
     Z_low_freq_data = Z_low_freq_data / 1e9
     Z_high_freq_data = Z_high_freq_data / 1e9
     
 
-    Z = Z_low_freq_data.copy()
-    
-    
+    #Z = Z_low_freq_data.copy()
+
+#%%     
     # Initial extension
     X_ext, Y_ext, Z_ext, ca_range = Surface_Extension(
         X, Y, Z,
@@ -57,7 +73,21 @@ def Surface_Extension_Iter_freq(
         ini_is_fall,
         ini_fu_range, ini_fv_range,
         ini_order_m, ini_order_n, ini_type)
+    
 
+    
+    
+    Z_ext_ca=Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']].copy()
+    ax1 = plt.pcolor(X*1e3, Y*1e3, 1e9*Z_ext_ca, shading='auto')
+    plt.title(f'Original Filled Data: RMS = {np.std(1e9*Z_ext_ca):.2f} nm')
+    plt.xlabel('X (mm)')
+    plt.ylabel('Y (mm)')
+    plt.colorbar()
+    plt.axis('equal')
+    # plt.tight_layout()
+    # ax1.set_aspect('equal')
+    plt.show()
+    
     # Calculate dwell time
     TT = 0
     pixel_m = np.median(np.diff(X[0, :]))
@@ -88,38 +118,73 @@ def Surface_Extension_Iter_freq(
         options, ratio, False
     )
 
+
     TT += T_Per
+    print(np.sum(TT))
+    Z_residual_ca_full = Z_ini - Z_removal_dw[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
+
+    Z_residual_ca_full = Z_residual_ca_full - np.mean(Z_residual_ca_full)
+
+    _, Z_low_freq_data, Z_high_freq_data = frequency_separate_dct(
+        X*1e3, Y*1e3, Z_residual_ca_full*1e9, 1e3*(X[1,2]-X[1,1]),cutoff_freq_ini,'yes');
+
+    Z_low_freq_data = Z_low_freq_data / 1e9
+    Z_high_freq_data = Z_high_freq_data / 1e9
+
 
     # Iterative refinement
     Z_residual_ca_prev = Z_residual_ca.copy()
+    Z_low_freq_data_prev = Z_low_freq_data.copy()
     mau_iter = 20
     iter_time = 1
     loop_over = True
     while loop_over:
 
-        if np.std(Z_residual_ca) < 3e-10:
+        if np.std(Z_low_freq_data) < 2e-10:
             X_ext, Y_ext, Z_ext, ca_range = Surface_Extension(
-                X, Y, Z_residual_ca,
+                X, Y, Z_low_freq_data,
                 brf_params,
                 Z_tif,
                 '8nn',
-                False)
+                True)
+            print('general')
         else:
             X_ext, Y_ext, Z_ext, ca_range = Surface_Extension(
-                X, Y, Z_residual_ca,
+                X, Y, Z_low_freq_data,
                 brf_params,
                 Z_tif,
                 iter_ext_method,
                 iter_is_fall,
                 iter_fu_range, iter_fv_range,
                 iter_order_m, iter_order_n, iter_type)
+            print('poly')
+            
+        ax1 = plt.pcolor(X*1e3, Y*1e3, 1e9*Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']], shading='auto')
+        Z_ext_ca=Z_ext[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']].copy()
+        plt.title(f'Original Filled Data: RMS = {np.std(1e9*Z_ext_ca):.2f} nm')
+        plt.xlabel('X (mm)')
+        plt.ylabel('Y (mm)')
+        plt.colorbar()
+        plt.axis('equal')
+        # plt.tight_layout()
+        # ax1.set_aspect('equal')
+        plt.show()
+            
+            # X_ext, Y_ext, Z_ext, ca_range = Surface_Extension(
+            #     X, Y, Z_low_freq_data,
+            #     brf_params,
+            #     Z_tif,
+            #     iter_ext_method,
+            #     iter_is_fall,
+            #     iter_fu_range, iter_fv_range,
+            #     9, 9, iter_type)
 
 
         du_ibf = 1e-3  # [m] ibf dwell grid sampling interval
         
         # dwell time calculation
         options = {
-            'Algorithm': 'FFT',  # or 'Iterative-FFT'
+            'Algorithm': 'Iterative-FFT',  # or 'Iterative-FFT'
             'maxIters': 10,
             'PV_dif': 0.001e-9,  # [m]
             'RMS_dif': 0.02e-9,  # [m]
@@ -129,7 +194,7 @@ def Surface_Extension_Iter_freq(
         }
         
         
-        ratio = 0.75
+        ratio = 1
         tmin = 0
         tmax = 1
         
@@ -144,7 +209,7 @@ def Surface_Extension_Iter_freq(
          _, _, Z_residual_ca  # [m]
         ) = DwellTime2D_FFT_Full_Test(
             X_ext, Y_ext, Z_ext,  # height to remove [m]
-            Z_removal_dw,
+            0, #Z_removal_dw
             brf_params.copy(),  # BRF parameters
             brf_mode,
             X_tif, Y_tif, Z_tif,
@@ -155,7 +220,7 @@ def Surface_Extension_Iter_freq(
             ratio,
             False
         )
-        
+        '''
         std_curr = np.std(Z_residual_ca)  # using numpy for standard deviation
         
         if std_curr > np.std(Z_residual_ca_prev):
@@ -174,7 +239,48 @@ def Surface_Extension_Iter_freq(
             Z_residual_ca_prev = Z_residual_ca
             TT += T_Per
             iter_time += 1
+        '''
+        
+        TT += T_Per
+        Z_removal_dw = conv_fft2(TT, B)
+        # use the Z_residual_ca_full as a iterative object, Z_low_freq_data as a target 
+        Z_residual_ca_full = Z_ini - Z_removal_dw[ca_range['y_s']:ca_range['y_e'], ca_range['x_s']:ca_range['x_e']]
+        print(np.std(Z_residual_ca_full))
+        print(np.sum(TT))
+        
+        _, Z_low_freq_data, Z_high_freq_data = frequency_separate_dct(
+            X*1e3, Y*1e3, Z_residual_ca_full*1e9, 1e3*(X[1,2]-X[1,1]),cutoff_freq_ini,'yes')
+        
+        Z_low_freq_data = (Z_low_freq_data-np.mean(Z_low_freq_data)) / 1e9
+        Z_high_freq_data = Z_high_freq_data / 1e9
+        
+        if iter_time > mau_iter:
+            loop_over = False
+            break
+        # elif np.std(Z_residual_ca_full) > np.std(Z_high_freq_data*1e9): 
+        elif np.std(Z_low_freq_data_prev) <= np.std(Z_low_freq_data):
+            loop_over = False
+            break
+        elif np.std(Z_low_freq_data) > rms_thrd:    
+            # cutoff_freq_res = pymoo_minimize_cutoff_freq(cutoff_freq_ini,
+            #     X, Y, Z_residual_ca_full, brf_params.copy(),
+            #     Z_tif,
+            #     init_ext_method, ini_is_fall,
+            #     ini_fu_range, ini_fv_range,
+            #     ini_order_m, ini_order_n,ini_type,
+            #     du_ibf, brf_mode, X_tif, Y_tif, iter_show=True)
 
+            # Z = Z_low_freq_data.copy()
+
+            Z_residual_ca_prev = Z_residual_ca.copy()
+            Z_low_freq_data_prev = Z_low_freq_data
+            # TT += T_Per
+            iter_time += 1
+            # loop_over = False
+            # break
+        else:
+            loop_over = False
+            break
 
     Z_ext = np.nan * np.ones_like(X_ext)  # Create an array of NaNs with the same shape as X_ext
     
@@ -244,7 +350,12 @@ def Surface_Extension_Iter_freq(
 
 
 
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
 
+# ax.plot_surface(X, Y, Z_residual_ca, cmap='viridis')
+
+# plt.show()
 
 
 
