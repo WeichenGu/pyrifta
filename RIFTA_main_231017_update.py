@@ -19,7 +19,7 @@ draw
 
 """
 import sys
-sys.path.append('./pyrifta/lib_rifta/')
+# sys.path.append('./pyrifta/lib_rifta/')
 # import os
 
 import scipy
@@ -48,7 +48,7 @@ from lib_rifta.surface_extension_2d import Surface_Extension_Iter_freq
 
 #%% BRF params
 
-brf_type = "suergaussian"
+brf_type = "supergaussian"
 brf_params = {}
 m_per_pixel = 4.569341e-05
 if 'input_BRF' in locals():
@@ -70,7 +70,7 @@ if 'input_BRF' in locals():
 elif 'brf_type' in locals():
     brf_params['A'] = 1.289e-9
     brf_params['sigma_xy'] = [1.358e-3, 1.343e-3]
-    brf_params['d_pix'] = 120
+    brf_params['d_pix'] = 140
     brf_params['d'] = brf_params['d_pix'] * m_per_pixel
     brf_params['lat_res_brf'] = m_per_pixel
     
@@ -101,11 +101,11 @@ elif 'brf_type' in locals():
 # plt.show()
 
 # load datx path
-include = ["Proc_IBF_HDX_data_Gordo-B_230406_AB_clamped_5_data_stitched_mask_rmv.datx"]
-base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
+# include = ["Proc_IBF_HDX_data_Gordo-B_230406_AB_clamped_5_data_stitched_mask_rmv.datx"]
+# base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
 
-# include = ["DUNiP-S4-BRF_20230919_clamped_7_data_stitched_pss.datx"]
-# base_path = r"C:/Users/Etrr/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230921_DUNiP_S4_7_P001"
+include = ["DUNiP-S4-BRF_20230919_clamped_7_data_stitched_pss.datx"]
+base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230921_DUNiP_S4_7_P001"
 
 # base_path = r"./"
 
@@ -118,7 +118,7 @@ folderjson = '../simu_data/'+datetime.datetime.now().strftime("%Y-%m-%d")+'/'+'G
 json_path = folderjson + '/'
 # pvt load file
 
-pvt_gen = True
+pvt_gen = False
 json_data_filename = testname+"_8nn_extension_dwell_time.json"
 
 
@@ -167,11 +167,12 @@ X,Y,Z = Selected_Region(include,base_path,
 
 # X = mat_contents['X_selected_region']/1e3
 # Y = mat_contents['Y_selected_region']/1e3
+
 m_per_pixel = 4.569341e-05
 pixel_m = np.median(np.diff(X[0,:]))
 coors = [X[0,0]*1e3, X[0,-1]*1e3, Y[-1,0]*1e3, Y[0,0]*1e3]
 
-fig = plt.figure(dpi=1800)
+fig = plt.figure(dpi=800)
 plt.imshow(Z, extent=coors)
 plt.colorbar()  
 plt.xlabel('x')
