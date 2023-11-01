@@ -19,7 +19,7 @@ draw
 
 """
 import sys
-sys.path.append('../lib/')
+sys.path.append('./lib_rifta/')
 # import os
 
 import scipy
@@ -35,8 +35,8 @@ import pymurilo.File_Functions as pymf
 
 # import lib_rifta.surface_extension_2d
 from lib_rifta import BRFGaussian2D
-from lib_rifta import Surface_Extension
 from lib_rifta import DwellTime2D_FFT_Full_Test
+from lib_rifta import BRFSuperGaussian2D 
 from lib_rifta import Reference_Point
 from lib_rifta import Selected_Region
 from lib_rifta import Scanfile_Savejson
@@ -50,21 +50,61 @@ from lib_rifta.surface_extension_2d import Surface_Extension_Iter_freq
 
 
 #%% BRF params
+
+brf_type = "supergaussian"
 brf_params = {}
-brf_params['A'] = 5.01e-10
-brf_params['sigma_xy'] = [4.96e-4, 4.96e-4]
 m_per_pixel = 4.569341e-05
-brf_params['d_pix'] = 90
-brf_params['d'] = brf_params['d_pix'] * m_per_pixel
-brf_params['lat_res_brf'] = m_per_pixel
+if 'input_BRF' in locals():
 
-brf_r = brf_params['d'] * 0.5
+    brf_params = {}
+    brf_params['A'] = 0.501e-9/253 * input_BRF['fitresult']['A']
+    brf_params['sigma_xy'] = [input_BRF['fitresult']['w1'] * 1e-3, input_BRF['fitresult']['w2'] * 1e-3]
+    brf_params['d_pix'] = input_BRF['z_data'].shape[0] - 1
+    brf_params['d'] = brf_params['d_pix'] * m_per_pixel
+    brf_params['lat_res_brf'] = m_per_pixel
+    
+    brf_r = brf_params['d'] * 0.5
+    
+    X_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)
+    Y_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)
+    xx, yy = np.meshgrid(X_brf, Y_brf)   
+    X_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
+    Y_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
+    
+    Z_avg = input_BRF['z_data'] * 0.501e-9/253
+    
+    Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0],[0]])
+elif 'brf_type' in locals():
+    # brf_params['A'] = 1.289e-9
+    # brf_params['sigma_xy'] = [1.358e-3, 1.343e-3]
+    # brf_params['d_pix'] = 120
+    
+    
+    brf_params['A'] = 5.01e-10
+    brf_params['sigma_xy'] = [4.96e-4, 4.96e-4]
 
-X_brf = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
-Y_brf = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
-xx, yy = np.meshgrid(X_brf, Y_brf)
+    brf_params['d_pix'] = 90
+    
+    
+    brf_params['d'] = brf_params['d_pix'] * m_per_pixel
+    brf_params['lat_res_brf'] = m_per_pixel
 
-Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0],[0]])
+    
+    brf_r = brf_params['d'] * 0.5
+    X_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)  # digit accuracy problem
+    Y_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)
+    xx, yy = np.meshgrid(X_brf, Y_brf)
+    
+    X_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
+    Y_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
+    
+    if brf_type == "gaussian":
+        Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0, 0]])
+    elif brf_type == "supergaussian":
+        brf_params['p'] = 1.644
+        Z_avg = BRFSuperGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0, 0], brf_params['p']])
+        
+
 # brf_params
 # fig = plt.figure(dpi=1800)
 # ax = fig.add_subplot(111, projection='3d')
@@ -76,10 +116,12 @@ Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0],[
 # ax.set_zlabel('z (nm)')
 # plt.show()
 
-# load datx path
+# load datx path 
 include = ["Proc_IBF_HDX_data_Gordo-B_230406_AB_clamped_5_data_stitched_mask_rmv.datx"]
 base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/20230418_2D_4th_iter"
 # base_path = r"./"
+# include = ["DUNiP-S4-BRF_20230919_clamped_7_data_stitched_pss.datx"]
+# base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230921_DUNiP_S4_7_P001"
 
 # save simulation result path
 testname = 'Gordo-B_2023406_test'  #json file name saved 
@@ -156,7 +198,7 @@ plt.show()
 
 # Dwell time calculation parameters
 dx_ibf = 1e-4
-brf_mode = 'model'
+brf_mode = 'avg'
 ratio = 1
 tmin = 0
 tmax = 1
@@ -205,6 +247,11 @@ if selection[0]:
     T_0[id_ext] = 0
 
     # Z_removal_dw_0 = scipy.signal.fftconvolve(T_0, B,mode='same')
+    if 'T_min' in locals():
+        T_0 = T_0 - np.min(T_0) + T_min
+    else:
+        T_0 = T_0 - np.min(T_0)        
+    
     Z_removal_dw_0 = conv_fft2(T_0, B)
     Z_0 = remove_surface1(X_ext, Y_ext, Z_0)
     Z_0 = Z_0 - np.nanmin(Z_0)
@@ -225,6 +272,11 @@ if selection[1]:
 
     T_gauss[id_ext] = 0
     # Z_removal_dw_gauss = scipy.signal.fftconvolve(T_gauss, B, mode='same')
+    if 'T_min' in locals():
+        T_gauss = T_gauss - np.min(T_gauss) + T_min
+    else:
+        T_gauss = T_gauss - np.min(T_gauss)    
+    
     Z_removal_dw_gauss = conv_fft2(T_gauss, B)
     Z_gauss = remove_surface1(X_ext, Y_ext, Z_gauss)
     Z_gauss = Z_gauss - np.nanmin(Z_gauss)  
@@ -245,6 +297,12 @@ if selection[2]:
 
     T_8nn[id_ext] = 0
     # Z_removal_dw_8nn = scipy.signal.fftconvolve(T_8nn, B, mode='same')
+    if 'T_min' in locals():
+        T_8nn = T_8nn - np.min(T_8nn) + T_min
+    else:
+        T_8nn = T_8nn - np.min(T_8nn)
+        
+    
     Z_removal_dw_8nn = conv_fft2(T_8nn, B)
     Z_8nn = remove_surface1(X_ext, Y_ext, Z_8nn)
     Z_8nn = Z_8nn - np.nanmin(Z_8nn)
@@ -267,6 +325,12 @@ if selection[3]:
 
     T_8nn_fall[id_ext] = 0
     # Z_removal_dw_8nn_fall = scipy.signal.fftconvolve(T_8nn_fall, B, mode='same')
+    
+    if 'T_min' in locals():
+        T_8nn_fall = T_8nn_fall - np.min(T_8nn_fall) + T_min
+    else:
+        T_8nn_fall = T_8nn_fall - np.min(T_8nn_fall)
+    
     Z_removal_dw_8nn_fall = conv_fft2(T_8nn_fall, B)
     Z_8nn_fall = remove_surface1(X_ext, Y_ext, Z_8nn_fall)
     Z_8nn_fall = Z_8nn_fall - np.nanmin(Z_8nn_fall)
@@ -315,6 +379,11 @@ if selection[4]:
 
     T_gp[id_ext] = 0
     # Z_removal_dw_8nn_fall = scipy.signal.fftconvolve(T_8nn_fall, B, mode='same')
+    if 'T_min' in locals():
+        T_gp = T_gp - np.min(T_gp) + T_min
+    else:
+        T_gp = T_gp - np.min(T_gp)
+    
     Z_removal_dw_gp = conv_fft2(T_gp, B)
     Z_gp = remove_surface1(X_ext, Y_ext, Z_gp)
     Z_gp = Z_gp - np.nanmin(Z_gp)
@@ -324,13 +393,14 @@ if selection[4]:
 
 #%% 
 
+
 # 6 iter
-poly_order = 7
+poly_order = 12
 
 if selection[5]: 
     if run_iter:
         T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter(
-            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 1e-10, X_brf, Y_brf, Z_avg,
+            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 2e-10, X_brf, Y_brf, Z_avg,
             'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
             'poly', False, [], [], poly_order, poly_order, 'Chebyshev'
         )
@@ -344,6 +414,30 @@ if selection[5]:
   
     Z_residual_ca_iter = remove_surface1(X_ca, Y_ca, Z_residual_ca_iter)
 
+#%%
+
+# 6 iter-freq
+poly_order = 12
+
+if selection[5]: 
+    if run_iter:
+        T_iter, B_iter, Z_iter, Z_residual_ca_iter, Z_removal_dw_iter = Surface_Extension_Iter_freq(
+            X, Y, Z, brf_params.copy(), 'avg', 1e-3, 3e-10, X_brf, Y_brf, Z_avg,
+            'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
+            'poly', False, [], [], poly_order, poly_order, 'Chebyshev',
+            cutoff_freq = 1.8
+        )
+    
+    if 'T_min' in locals():
+        T_iter = T_iter - np.min(T_iter) + T_min
+    else:
+        T_iter = T_iter - np.min(T_iter)
+
+    Z_removal_dw_iter = conv_fft2(T_iter, B)
+    
+    Z_residual_ca_iter[np.isnan(Z)] = np.nan
+  
+    Z_residual_ca_iter = remove_surface1(X_ca, Y_ca, Z_residual_ca_iter)
 
 #%%
 # fig, axs = plt.subplots(ncols=4, figsize=(15, 6))
@@ -758,12 +852,12 @@ if selection_savejson[5]:
 
 plt.show()
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
 
-ax.plot_surface(X_ext, Y_ext, Z_removal_dw_gauss, cmap='viridis')
+# ax.plot_surface(X_ext, Y_ext, Z_removal_dw_gauss, cmap='viridis')
 
-plt.show()
+# plt.show()
 
 
 
@@ -776,11 +870,9 @@ plt.show()
 if pvt_gen:
     pvt2d_set = Generate_pvt_from_json(json_path = json_path,
                                data_filename = json_data_filename,
-                               run_in =20,
-                               n_points =751,
+                               run_in =0,
+                               n_points =353,
                                plot2d = True, plot1d = True)
-    
-    
     
     
     
