@@ -30,9 +30,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import binary_dilation
 import pymurilo.File_Functions as pymf
 # from scipy.io import loadmat
-
 # from scipy import interpolate
-
 # import lib_rifta.surface_extension_2d
 from lib_rifta import BRFGaussian2D, BRFSuperGaussian2D, Surface_Extension, DwellTime2D_FFT_Full_Test
 from lib_rifta import Reference_Point
@@ -69,7 +67,7 @@ if 'input_BRF' in locals():
     Y_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
     
     Z_avg = input_BRF['z_data'] * 0.501e-9/253
-    
+
 elif 'brf_type' in locals():
     brf_params['A'] = 1.289e-9
     brf_params['sigma_xy'] = [1.358e-3, 1.343e-3]
