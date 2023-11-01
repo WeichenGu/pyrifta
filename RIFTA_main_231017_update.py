@@ -53,10 +53,10 @@ brf_params = {}
 m_per_pixel = 4.569341e-05
 if 'input_BRF' in locals():
 
-    brf_params['A'] = 5.01e-10
-    brf_params['sigma_xy'] = [4.96e-4, 4.96e-4]
-
-    brf_params['d_pix'] = 90
+    brf_params = {}
+    brf_params['A'] = 0.501e-9/253 * input_BRF['fitresult']['A']
+    brf_params['sigma_xy'] = [input_BRF['fitresult']['w1'] * 1e-3, input_BRF['fitresult']['w2'] * 1e-3]
+    brf_params['d_pix'] = input_BRF['z_data'].shape[0] - 1
     brf_params['d'] = brf_params['d_pix'] * m_per_pixel
     brf_params['lat_res_brf'] = m_per_pixel
     
@@ -64,9 +64,12 @@ if 'input_BRF' in locals():
     
     X_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)
     Y_brf = np.arange(-brf_r, brf_r+m_per_pixel*1e-3, m_per_pixel)
-    xx, yy = np.meshgrid(X_brf, Y_brf)
+    xx, yy = np.meshgrid(X_brf, Y_brf)   
+    X_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
+    Y_brf_fullres = np.arange(-brf_r, brf_r + m_per_pixel, m_per_pixel)
     
-    Z_avg = BRFGaussian2D(xx, yy, 1, [brf_params['A'], brf_params['sigma_xy'], [0],[0]])
+    Z_avg = input_BRF['z_data'] * 0.501e-9/253
+    
 elif 'brf_type' in locals():
     brf_params['A'] = 1.289e-9
     brf_params['sigma_xy'] = [1.358e-3, 1.343e-3]
