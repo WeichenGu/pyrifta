@@ -1,9 +1,9 @@
-Based on: 
+Based on:  
 https://github.com/TWANG006/RIFTA  
 https://github.com/TWANG006/surface-extension  
 
 Output figure:  
-Height error:
+Height error:  
 
 ![image](example/Figure_2023-10-04_170203_(0).png)
 
