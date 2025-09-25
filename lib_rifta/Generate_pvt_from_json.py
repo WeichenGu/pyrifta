@@ -17,7 +17,8 @@ from ibfanalysis import utilities as utils
 def Generate_pvt_from_json(
         json_path,data_filename,run_in = 10,n_points = 200,
         flip_y = True, flip_z = False,
-        plot2d = True, plot1d = True
+        plot2d = True, plot1d = True,
+        grid_option = False
         ):
 # json_path = r"//dc/dls/science/groups/optics_and_metrology/ibf/pvt/Gordo-B/gordo-B_P003/2023-03-30/Gordo-B_y-spacingx0"
 
@@ -77,14 +78,15 @@ def Generate_pvt_from_json(
     max(max_v_list)
     
     # In[5]:
-    pvt_filename = "v10test_10runin"+data_filename +"_pvt_" +str(pvt2d.total_points)+".json"
-    
+    pvt_filename = "equal_t_interval_"+data_filename +"_pvt_" +str(pvt2d.total_points)+".json"
+
     # pvt_filename = r"Non_inputIBF_trapz_c20_l95_8NN_extension_dwell time_pvt_1396062.json"
-    pvt2d.write_profile(json_path, pvt_filename)
-    
-    
+    if grid_option == True:
+        pvt2d.write_profile_grid(json_path, pvt_filename)
+    else:
+        pvt2d.write_profile(json_path, pvt_filename)
     # In[6]:
-    
+
     # base_path = r"C:/Users/frw78547/OneDrive - Diamond Light Source Ltd/Documents/IBF DATA/230619_trapz_P001/"
     
     path = os.path.join(json_path, pvt_filename)
