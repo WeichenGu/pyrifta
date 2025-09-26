@@ -1,4 +1,3 @@
-***Unfinished project***
 
 Based on:  
 https://github.com/TWANG006/RIFTA  
